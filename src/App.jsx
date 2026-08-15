@@ -4,16 +4,21 @@ import UberTopBar from './components/UberTopBar';
 import FlightForm from './components/FlightForm';
 import ScheduleResults from './components/ScheduleResults';
 import TarotWidget from './components/TarotWidget';
-import { fetchBangkokTomorrowWeather } from './services/weatherService';
+import { fetchLocationWeather } from './services/weatherService';
 
 function MainContent() {
   const [scheduleData, setScheduleData] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
 
-  useEffect(() => {
-    fetchBangkokTomorrowWeather().then((data) => {
+  // Load weather for Sukhumvit 71 on mount or when flight schedule changes
+  const updateWeatherForSchedule = (targetDate = null, departureDate = null) => {
+    fetchLocationWeather(targetDate, departureDate).then((data) => {
       setWeatherData(data);
     });
+  };
+
+  useEffect(() => {
+    updateWeatherForSchedule();
   }, []);
 
   const decimalHoursToMinutes = (decimalHours) => {
@@ -75,6 +80,9 @@ function MainContent() {
     const bedTime6hDate = new Date(wakeupDate.getTime() - 6 * 60 * 60 * 1000);
     const bedTime5hDate = new Date(wakeupDate.getTime() - 5 * 60 * 60 * 1000);
 
+    // Update hourly weather specifically for this flight window (+-3h)
+    updateWeatherForSchedule(reportDate, departureDate);
+
     setScheduleData({
       reportDate,
       wakeupDate,
@@ -92,6 +100,7 @@ function MainContent() {
 
   const handleReset = () => {
     setScheduleData(null);
+    updateWeatherForSchedule();
   };
 
   useEffect(() => {
@@ -137,7 +146,7 @@ function MainContent() {
         {/* Minimal Footer */}
         <footer className="pt-6 pb-4 text-center text-[11px] text-slate-400 dark:text-slate-600 space-y-1">
           <p className="font-mono uppercase tracking-wider">
-            Flight Duty & Rest Planner • Minimal Edition
+            Flight Duty & Rest Planner • Sukhumvit 71 (Suan Luang)
           </p>
         </footer>
 

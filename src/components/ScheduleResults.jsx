@@ -11,7 +11,10 @@ import {
   Clock, 
   ArrowRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CloudRain,
+  SunMedium,
+  MapPin
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import LiveCountdown from './LiveCountdown';
@@ -39,16 +42,18 @@ export default function ScheduleResults({ data, weather }) {
   } = data;
 
   const handleCopyBriefing = () => {
-    const weatherSummary = weather 
-      ? `สภาพอากาศ กทม. พรุ่งนี้: ${weather.label} ${weather.minTemp}-${weather.maxTemp}°C (ฝน ${weather.rainProb}%)`
-      : `สภาพอากาศ กทม. พรุ่งนี้: โปรดตรวจสอบก่อนออกเดินทาง`;
+    const weatherSummary = weather?.windowSummary 
+      ? `สภาพอากาศช่วงเดินทาง (สุขุมวิท 71): ${weather.windowSummary}`
+      : weather?.label 
+        ? `สภาพอากาศ กทม. พรุ่งนี้: ${weather.label} ${weather.minTemp}-${weather.maxTemp}°C (ฝน ${weather.rainProb}%)`
+        : `สภาพอากาศ: โปรดตรวจสอบก่อนออกเดินทาง`;
 
     const text = `FLIGHT & REST SCHEDULE BRIEFING
 ━━━━━━━━━━━━━━━━━━━━
 เริ่มงาน / ติ๊กต็อก: ${formatTime(reportDate)} (${formatDateShort(reportDate)})
 เวลาตื่นนอนแนะนำ: ${formatTime(wakeupDate)}
 เวลาแต่งตัว: ${prepTimeFormatted}
-เวลาออกจากบ้าน: ${formatTime(departureDate)} (เดินทาง ${travelTimeFormatted})
+เวลาออกจากบ้าน (สุขุมวิท 71): ${formatTime(departureDate)} (เดินทาง ${travelTimeFormatted})
 ถึงหน้างาน: ${formatTime(reportDate)}
 ${weatherSummary}
 ━━━━━━━━━━━━━━━━━━━━
@@ -58,7 +63,7 @@ ${weatherSummary}
 • นอนมาตรฐาน 6 ชม.: ${formatTime(bedTime6hDate)}
 • นอนขั้นต่ำ 5 ชม.: ${formatTime(bedTime5hDate)}
 ━━━━━━━━━━━━━━━━━━━━
-ขอให้การเดินทางราบรื่นและปลอดภัยเสมอ`;
+ขอให้การเดินทางราบรื่น ปลอดภัย และตรงต่อเวลาเสมอ`;
 
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -83,20 +88,15 @@ ${weatherSummary}
     const totalHoursFloat = hours + minutes / 60;
 
     let label = 'นอนเต็มอิ่ม ร่างกายพร้อมปฏิบัติงาน 100%';
-    let color = 'bg-emerald-500 text-emerald-700 dark:text-emerald-300';
 
     if (totalHoursFloat >= 8) {
       label = 'นอนเต็มอิ่ม ฟื้นฟูร่างกายสมบูรณ์แบบ';
-      color = 'bg-emerald-500 text-emerald-700 dark:text-emerald-300';
     } else if (totalHoursFloat >= 7) {
       label = 'พักผ่อนเพียงพอ ไม่ง่วงระหว่างวัน';
-      color = 'bg-sky-500 text-sky-700 dark:text-sky-300';
     } else if (totalHoursFloat >= 6) {
       label = 'พอใช้ได้ แต่อาจมีเพลียเล็กน้อย';
-      color = 'bg-amber-500 text-amber-700 dark:text-amber-300';
     } else {
       label = 'นอนน้อย ควรหาเวลาพักผ่อนเพิ่ม';
-      color = 'bg-rose-500 text-rose-700 dark:text-rose-300';
     }
 
     setSleepResult({
@@ -104,7 +104,6 @@ ${weatherSummary}
       minutes,
       percentage: Math.min(100, (totalHoursFloat / 9) * 100),
       label,
-      color,
     });
   };
 
@@ -161,7 +160,7 @@ ${weatherSummary}
         <div className="p-3.5 rounded-xl bg-purple-50/70 dark:bg-[#181818] border border-purple-200/80 dark:border-[#262626] transition-colors">
           <div className="flex items-center gap-1.5 text-purple-900 dark:text-purple-300 text-xs font-bold mb-0.5">
             <Car className="w-3.5 h-3.5" />
-            <span>เวลาออกจากบ้าน</span>
+            <span>เวลาออกจากบ้าน (สุขุมวิท 71)</span>
           </div>
           <div className="text-2xl font-black text-purple-950 dark:text-white tabular-nums">
             {formatTime(departureDate)}
@@ -187,7 +186,59 @@ ${weatherSummary}
 
       </div>
 
-      {/* 3. Bedtime 4-Box Matrix */}
+      {/* 3. Flight Window Weather Forecast (±3 Hours around flight from Sukhumvit 71) */}
+      {weather?.hourlyWindow && weather.hourlyWindow.length > 0 && (
+        <div className="w-full rounded-2xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#222222] p-4 shadow-sm transition-colors space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
+              <SunMedium className="w-3.5 h-3.5 text-amber-500" />
+              <span>พยากรณ์อากาศช่วงเดินทาง (สุขุมวิท 71 ➔ สนามบิน ±3 ชม.)</span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-mono">10250</span>
+          </div>
+
+          {/* Hourly Visual Scroll Strip */}
+          <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5">
+            {weather.hourlyWindow.map((item, idx) => (
+              <div
+                key={idx}
+                className={`shrink-0 w-20 p-2 rounded-xl border text-center text-xs space-y-0.5 ${
+                  item.isDeparture
+                    ? 'bg-purple-500/10 border-purple-500/40 text-purple-900 dark:text-purple-300 font-bold'
+                    : item.isReport
+                      ? 'bg-pink-500/10 border-pink-500/40 text-pink-900 dark:text-pink-300 font-bold'
+                      : 'bg-slate-50 dark:bg-[#181818] border-slate-200 dark:border-[#262626] text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                <span className="text-[10px] font-bold block tabular-nums">
+                  {item.hourLabel}
+                </span>
+                <span className="text-[9px] block opacity-75">
+                  {item.isDeparture ? 'ออกบ้าน' : item.isReport ? 'เริ่มงาน' : '—'}
+                </span>
+                <span className="text-xs block">
+                  {item.isRain ? '🌧️' : '☀️'}
+                </span>
+                <span className="text-[11px] font-bold block tabular-nums">
+                  {item.temp}°C
+                </span>
+                <span className={`text-[10px] font-semibold block tabular-nums ${
+                  item.rainProb >= 40 ? 'text-rose-500' : 'text-sky-500'
+                }`}>
+                  ฝน {item.rainProb}%
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Smart Advisory note */}
+          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-[#181818] p-2.5 rounded-xl border border-slate-100 dark:border-[#222222]">
+            💡 <strong>สรุปสภาพอากาศ:</strong> {weather.windowSummary}
+          </p>
+        </div>
+      )}
+
+      {/* 4. Bedtime 4-Box Matrix */}
       <div className="w-full rounded-2xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#222222] p-4 shadow-sm transition-colors">
         <div className="flex items-center gap-1.5 mb-3 text-slate-900 dark:text-white text-xs font-bold">
           <Moon className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
@@ -237,7 +288,7 @@ ${weatherSummary}
         </div>
       </div>
 
-      {/* 4. Sleep Calculator Inline Toggle */}
+      {/* 5. Sleep Calculator Inline Toggle */}
       <div className="w-full rounded-xl bg-slate-100 dark:bg-[#141414] border border-slate-200 dark:border-[#222222] p-3 transition-colors">
         <button
           type="button"

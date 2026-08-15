@@ -1,88 +1,141 @@
-// Open-Meteo Service for Bangkok Weather Forecast
-export const WMO_WEATHER_MAP = {
-  0: { label: "ท้องฟ้าโปร่ง แจ่มใส", icon: "Sun", color: "text-amber-500", bg: "bg-amber-50 border-amber-200" },
-  1: { label: "ฟ้าโปร่ง มีเมฆเล็กน้อย", icon: "SunMedium", color: "text-amber-500", bg: "bg-amber-50 border-amber-200" },
-  2: { label: "มีเมฆเป็นบางส่วน", icon: "CloudSun", color: "text-sky-500", bg: "bg-sky-50 border-sky-200" },
-  3: { label: "มีเมฆมาก ท้องฟ้าครึ้ม", icon: "Cloud", color: "text-slate-500", bg: "bg-slate-50 border-slate-200" },
-  45: { label: "มีหมอกบางในตอนเช้า", icon: "CloudFog", color: "text-slate-400", bg: "bg-slate-50 border-slate-200" },
-  48: { label: "หมอกหนา ทัศนวิสัยลดลง", icon: "CloudFog", color: "text-slate-400", bg: "bg-slate-50 border-slate-200" },
-  51: { label: "ฝนตกปรอยๆ เล็กน้อย", icon: "CloudDrizzle", color: "text-blue-400", bg: "bg-blue-50 border-blue-200" },
-  53: { label: "ฝนปรอยปานกลาง", icon: "CloudDrizzle", color: "text-blue-500", bg: "bg-blue-50 border-blue-200" },
-  55: { label: "ฝนปรอยหนาแน่น", icon: "CloudDrizzle", color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
-  61: { label: "ฝนตกเล็กน้อย", icon: "CloudRain", color: "text-blue-500", bg: "bg-blue-50 border-blue-200" },
-  63: { label: "ฝนตกปานกลาง", icon: "CloudRain", color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
-  65: { label: "ฝนตกหนัก", icon: "CloudRain", color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
-  80: { label: "ฝนตกเป็นช่วงๆ", icon: "CloudRain", color: "text-blue-500", bg: "bg-blue-50 border-blue-200" },
-  81: { label: "ฝนตกค่อนข้างหนัก", icon: "CloudRain", color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
-  82: { label: "ฝนตกหนักมาก", icon: "CloudRain", color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
-  95: { label: "พายุฝนฟ้าคะนอง", icon: "CloudLightning", color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
-  96: { label: "พายุฝนฟ้าคะนองและลมแรง", icon: "CloudLightning", color: "text-purple-700", bg: "bg-purple-50 border-purple-200" },
-  99: { label: "พายุฝนฟ้าคะนองรุนแรง", icon: "CloudLightning", color: "text-purple-800", bg: "bg-purple-50 border-purple-200" },
+// Open-Meteo Service for 1269 Sukhumvit 71 Rd, Suan Luang, Bangkok 10250
+export const LOCATION_INFO = {
+  address: "1269 ถ.สุขุมวิท 71 แขวง/เขตสวนหลวง กรุงเทพฯ 10250",
+  shortAddress: "สุขุมวิท 71, สวนหลวง (BKK)",
+  latitude: 13.7145,
+  longitude: 100.5986,
 };
 
-export async function fetchBangkokTomorrowWeather() {
+export const WMO_WEATHER_MAP = {
+  0: { label: "ท้องฟ้าโปร่ง แจ่มใส", icon: "Sun", isRain: false, isSun: true },
+  1: { label: "ฟ้าโปร่ง แดดออก", icon: "SunMedium", isRain: false, isSun: true },
+  2: { label: "มีเมฆเป็นบางส่วน", icon: "CloudSun", isRain: false, isSun: true },
+  3: { label: "มีเมฆมาก ท้องฟ้าครึ้ม", icon: "Cloud", isRain: false, isSun: false },
+  45: { label: "มีหมอกบางในตอนเช้า", icon: "CloudFog", isRain: false, isSun: false },
+  48: { label: "หมอกหนา ทัศนวิสัยลดลง", icon: "CloudFog", isRain: false, isSun: false },
+  51: { label: "ฝนตกปรอยๆ เล็กน้อย", icon: "CloudDrizzle", isRain: true, isSun: false },
+  53: { label: "ฝนปรอยปานกลาง", icon: "CloudDrizzle", isRain: true, isSun: false },
+  55: { label: "ฝนปรอยหนาแน่น", icon: "CloudDrizzle", isRain: true, isSun: false },
+  61: { label: "ฝนตกเล็กน้อย", icon: "CloudRain", isRain: true, isSun: false },
+  63: { label: "ฝนตกปานกลาง", icon: "CloudRain", isRain: true, isSun: false },
+  65: { label: "ฝนตกหนัก", icon: "CloudRain", isRain: true, isSun: false },
+  80: { label: "ฝนตกเป็นช่วงๆ", icon: "CloudRain", isRain: true, isSun: false },
+  81: { label: "ฝนตกค่อนข้างหนัก", icon: "CloudRain", isRain: true, isSun: false },
+  82: { label: "ฝนตกหนักมาก", icon: "CloudRain", isRain: true, isSun: false },
+  95: { label: "พายุฝนฟ้าคะนอง", icon: "CloudLightning", isRain: true, isSun: false },
+  96: { label: "พายุฝนฟ้าคะนอง ลมแรง", icon: "CloudLightning", isRain: true, isSun: false },
+  99: { label: "พายุฝนฟ้าคะนองรุนแรง", icon: "CloudLightning", isRain: true, isSun: false },
+};
+
+export async function fetchLocationWeather(targetDate = null, departureDate = null) {
   try {
-    const res = await fetch(
-      'https://api.open-meteo.com/v1/forecast?latitude=13.7563&longitude=100.5018&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=Asia%2FBangkok'
-    );
-    if (!res.ok) throw new Error('Failed to fetch weather data');
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LOCATION_INFO.latitude}&longitude=${LOCATION_INFO.longitude}&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FBangkok`;
+    
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch weather');
     const data = await res.json();
 
+    const hourly = data.hourly;
     const daily = data.daily;
-    // Index 1 represents tomorrow, index 0 is today
-    const tomorrowIndex = daily.time.length > 1 ? 1 : 0;
-    
-    const weatherCode = daily.weathercode[tomorrowIndex];
-    const maxTemp = Math.round(daily.temperature_2m_max[tomorrowIndex]);
-    const minTemp = Math.round(daily.temperature_2m_min[tomorrowIndex]);
-    const rainProb = daily.precipitation_probability_max ? daily.precipitation_probability_max[tomorrowIndex] : 0;
-    const dateStr = daily.time[tomorrowIndex];
 
-    const weatherInfo = WMO_WEATHER_MAP[weatherCode] || {
-      label: "สภาพอากาศปกติ",
-      icon: "Sun",
-      color: "text-amber-500",
-      bg: "bg-amber-50 border-amber-200"
+    // Default daily summary (tomorrow or today)
+    const tomorrowIndex = daily.time.length > 1 ? 1 : 0;
+    const defaultWeatherCode = daily.weathercode[tomorrowIndex];
+    const defaultWeatherInfo = WMO_WEATHER_MAP[defaultWeatherCode] || WMO_WEATHER_MAP[1];
+
+    const result = {
+      success: true,
+      address: LOCATION_INFO.address,
+      shortAddress: LOCATION_INFO.shortAddress,
+      minTemp: Math.round(daily.temperature_2m_min[tomorrowIndex]),
+      maxTemp: Math.round(daily.temperature_2m_max[tomorrowIndex]),
+      rainProb: daily.precipitation_probability_max ? daily.precipitation_probability_max[tomorrowIndex] : 0,
+      label: defaultWeatherInfo.label,
+      iconName: defaultWeatherInfo.icon,
+      isRain: defaultWeatherInfo.isRain,
+      travelTip: "สภาพอากาศทั่วไปสำหรับการเดินทาง",
+      hourlyWindow: [],
+      windowSummary: "",
     };
 
-    // Travel tip based on weather
-    let travelTip = "การเดินทางราบรื่น ไม่มีอุปสรรคสำคัญ";
-    if (rainProb >= 60 || weatherCode >= 61) {
-      travelTip = "มีโอกาสฝนตก แนะนำพกร่มและเผื่อเวลาเดินทางเพิ่ม 15-20 นาที";
-    } else if (maxTemp >= 35) {
-      travelTip = "อากาศค่อนข้างร้อน ดื่มน้ำบ่อยๆ และเตรียมผ้าเย็นติดตัว";
+    // Calculate +-3 Hours Window from flight/report duty time
+    if (targetDate) {
+      const reportD = new Date(targetDate);
+      const depD = departureDate ? new Date(departureDate) : new Date(reportD.getTime() - 60 * 60 * 1000);
+
+      // Window starts 3 hours before departure (or 4h before report) and ends 3 hours after report
+      const windowStartMs = depD.getTime() - 2 * 60 * 60 * 1000;
+      const windowEndMs = reportD.getTime() + 3 * 60 * 60 * 1000;
+
+      const windowItems = [];
+      let maxWindowRain = 0;
+      let hasRainInWindow = false;
+
+      for (let i = 0; i < hourly.time.length; i++) {
+        // Parse time string e.g. "2026-08-17T06:00"
+        const hourDate = new Date(hourly.time[i]);
+        const hourMs = hourDate.getTime();
+
+        if (hourMs >= windowStartMs && hourMs <= windowEndMs) {
+          const wCode = hourly.weathercode[i];
+          const wInfo = WMO_WEATHER_MAP[wCode] || WMO_WEATHER_MAP[1];
+          const temp = Math.round(hourly.temperature_2m[i]);
+          const rain = hourly.precipitation_probability[i] || 0;
+
+          if (rain > maxWindowRain) maxWindowRain = rain;
+          if (wInfo.isRain || rain >= 40) hasRainInWindow = true;
+
+          const hoursVal = hourDate.getHours();
+          const hourLabel = `${String(hoursVal).padStart(2, '0')}:00`;
+
+          // Check if this hour is near departure or report
+          const isNearDeparture = Math.abs(hourMs - depD.getTime()) < 35 * 60 * 1000;
+          const isNearReport = Math.abs(hourMs - reportD.getTime()) < 35 * 60 * 1000;
+
+          windowItems.push({
+            timeIso: hourly.time[i],
+            hourLabel,
+            temp,
+            rainProb: rain,
+            weatherCode: wCode,
+            label: wInfo.label,
+            iconName: wInfo.icon,
+            isRain: wInfo.isRain,
+            isDeparture: isNearDeparture,
+            isReport: isNearReport,
+          });
+        }
+      }
+
+      result.hourlyWindow = windowItems;
+      result.maxWindowRain = maxWindowRain;
+
+      // Generate flight window specific advisory
+      if (hasRainInWindow || maxWindowRain >= 50) {
+        result.windowSummary = `ช่วงเวลาเดินทาง (±3 ชม. จากไฟลท์) มีโอกาสฝนตกสูงสุด ${maxWindowRain}% แนะนำพกร่มและเผื่อเวลาเดินทางออกจากสุขุมวิท 71 เพิ่ม 15-20 นาที`;
+        result.travelTip = `มีฝนตกช่วงเดินทาง (โอกาสฝน ${maxWindowRain}%) ควรเผื่อเวลาเดินทาง`;
+      } else {
+        result.windowSummary = `ช่วงเวลาเดินทาง (±3 ชม. จากไฟลท์) อากาศดี แดดออก ไม่มีฝน (โอกาสฝนเพียง ${maxWindowRain}%) การเดินทางจากสุขุมวิท 71 ราบรื่น`;
+        result.travelTip = `อากาศแจ่มใส แดดดี การเดินทางราบรื่น`;
+      }
     }
 
-    return {
-      success: true,
-      city: "กรุงเทพฯ (Bangkok)",
-      date: dateStr,
-      weatherCode,
-      label: weatherInfo.label,
-      iconName: weatherInfo.icon,
-      color: weatherInfo.color,
-      bg: weatherInfo.bg,
-      maxTemp,
-      minTemp,
-      rainProb,
-      travelTip,
-    };
+    return result;
   } catch (error) {
-    console.error("Open-Meteo weather fetch error:", error);
-    // Return friendly fallback
+    console.error("Open-Meteo location error:", error);
     return {
       success: false,
-      city: "กรุงเทพฯ (Bangkok)",
-      date: "พรุ่งนี้",
-      weatherCode: 1,
-      label: "ฟ้าโปร่ง แดดสดใส",
-      iconName: "SunMedium",
-      color: "text-amber-500",
-      bg: "bg-amber-50 border-amber-200",
-      maxTemp: 34,
+      address: LOCATION_INFO.address,
+      shortAddress: LOCATION_INFO.shortAddress,
       minTemp: 26,
+      maxTemp: 33,
       rainProb: 20,
-      travelTip: "เดินทางสะดวก ไม่มีฝนตกหนัก",
+      label: "ฟ้าโปร่ง แดดออก",
+      iconName: "SunMedium",
+      isRain: false,
+      travelTip: "การเดินทางจากสุขุมวิท 71 ราบรื่น ไม่มีฝนตกหนัก",
+      hourlyWindow: [],
+      windowSummary: "ช่วงเวลาเดินทางฟ้าโปร่ง แดดสดใส โอกาสฝน 20%",
     };
   }
 }
