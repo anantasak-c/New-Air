@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import UberTopBar from './components/UberTopBar';
-import WeatherBadge from './components/WeatherBadge';
 import FlightForm from './components/FlightForm';
 import ScheduleResults from './components/ScheduleResults';
 import TarotWidget from './components/TarotWidget';
-import { Plane, ShieldCheck, Heart } from 'lucide-react';
+import { fetchBangkokTomorrowWeather } from './services/weatherService';
 
 function MainContent() {
   const [scheduleData, setScheduleData] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
 
-  // Convert decimal hours (e.g., 1.30 = 90 minutes)
+  useEffect(() => {
+    fetchBangkokTomorrowWeather().then((data) => {
+      setWeatherData(data);
+    });
+  }, []);
+
   const decimalHoursToMinutes = (decimalHours) => {
     const hours = Math.floor(decimalHours);
     const decimalMinutes = decimalHours - hours;
@@ -19,7 +23,6 @@ function MainContent() {
     return hours * 60 + minutes;
   };
 
-  // Format decimal hours to readable Thai string
   const formatDecimalHours = (decimalHours) => {
     const totalMinutes = decimalHoursToMinutes(decimalHours);
     const hours = Math.floor(totalMinutes / 60);
@@ -29,7 +32,6 @@ function MainContent() {
     return `${hours} ชม. ${minutes} นาที`;
   };
 
-  // Format Date to 12-hour AM/PM string with zero padding
   const formatTime = (date) => {
     if (!date) return '--:--';
     let hours = date.getHours();
@@ -42,7 +44,6 @@ function MainContent() {
     return `${hoursFormatted}:${minutesFormatted} ${ampm}`;
   };
 
-  // Format Date to short Thai date string
   const formatDateShort = (date) => {
     if (!date) return '';
     const months = [
@@ -93,7 +94,6 @@ function MainContent() {
     setScheduleData(null);
   };
 
-  // Auto calculate on initial load if saved data exists
   useEffect(() => {
     const savedReport = localStorage.getItem('uber_planner_reportTime') || localStorage.getItem('rest_planner_reportTime');
     const savedPrep = localStorage.getItem('uber_planner_prepTime') || localStorage.getItem('rest_planner_prepTime') || '1.30';
@@ -109,24 +109,21 @@ function MainContent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-black text-slate-900 dark:text-white flex flex-col selection:bg-slate-900 selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors">
       
-      {/* Uber Sticky Top Bar */}
+      {/* Sleek Top Bar with Weather Pill & Theme Toggle */}
       <UberTopBar weather={weatherData} />
 
-      {/* Main Container - Mobile First Optimized */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-5 space-y-4 pb-20">
+      {/* Main Container - Compact 1-Screen Glanceable Layout */}
+      <main className="flex-1 max-w-xl w-full mx-auto px-3.5 py-4 space-y-3.5 pb-12">
         
-        {/* Open-Meteo Bangkok Weather */}
-        <WeatherBadge onWeatherLoaded={setWeatherData} />
-
-        {/* Smart Flight Form Inputs */}
+        {/* Form Inputs */}
         <FlightForm 
           onCalculate={handleCalculate} 
           onReset={handleReset} 
         />
 
-        {/* Calculation Outputs (Timeline & Wake-up Hero Card) */}
+        {/* Final Result Display (1-Screen Glanceability) */}
         {scheduleData && (
           <ScheduleResults 
             data={scheduleData} 
@@ -134,18 +131,13 @@ function MainContent() {
           />
         )}
 
-        {/* Daily Flight Tarot */}
+        {/* Daily Tarot Card Button (Hidden by default, opens in Modal) */}
         <TarotWidget />
 
-        {/* Footer */}
-        <footer className="pt-8 pb-6 text-center text-xs text-[#6b6b6b] space-y-2 border-t border-[#1f1f1f]">
-          <div className="flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-wider text-[#a6a6a6]">
-            <span>✈️ Flight Duty & Rest Planner</span>
-            <span>•</span>
-            <span>Uber Design Edition</span>
-          </div>
-          <p className="text-[11px] text-[#6b6b6b]">
-            Designed for Flight Crew, Pilots & Smart Global Travelers
+        {/* Minimal Footer */}
+        <footer className="pt-6 pb-4 text-center text-[11px] text-slate-400 dark:text-slate-600 space-y-1">
+          <p className="font-mono uppercase tracking-wider">
+            Flight Duty & Rest Planner • Minimal Edition
           </p>
         </footer>
 

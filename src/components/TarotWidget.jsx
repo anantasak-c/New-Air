@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, RotateCw, Eye, Star, Heart } from 'lucide-react';
+import { Sparkles, RotateCw, Eye, Star, X } from 'lucide-react';
 import { getDailyTarotCard } from '../data/tarotData';
 import confetti from 'canvas-confetti';
 
 export default function TarotWidget() {
+  const [isOpen, setIsOpen] = useState(false);
   const [card, setCard] = useState(null);
   const [isFlipped, setIsFlipped] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,175 +20,180 @@ export default function TarotWidget() {
       setIsFlipped(true);
 
       confetti({
-        particleCount: 30,
-        spread: 70,
+        particleCount: 25,
+        spread: 60,
         origin: { y: 0.85 },
-        colors: ['#ffffff', '#276ef1', '#ffc043']
+        colors: ['#0f172a', '#e2e8f0', '#fbbf24']
       });
-    }, 400);
+    }, 300);
   };
 
   useEffect(() => {
-    drawNewCard();
-  }, []);
+    if (isOpen && !card) {
+      drawNewCard();
+    }
+  }, [isOpen]);
 
   const handleFlipToggle = () => {
     setIsFlipped(!isFlipped);
   };
 
   return (
-    <div className="w-full rounded-2xl bg-[#141414] dark:bg-[#141414] border border-[#292929] p-4 sm:p-6 shadow-uber-card">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#222222] pb-3 mb-5">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            <span>🔮 ไพ่ทาโรต์ประจำวัน (Daily Flight Tarot)</span>
-          </h2>
-          <p className="text-xs text-[#a6a6a6]">
-            เช็คพลังงานบวกและคำแนะนำเสริมความมั่นใจในการปฏิบัติภารกิจ
-          </p>
-        </div>
-
+    <>
+      {/* Ultra-Minimal Bottom Luxury Trigger Button */}
+      <div className="w-full pt-2">
         <button
-          onClick={drawNewCard}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1f1f1f] hover:bg-[#262626] border border-[#333333] text-white rounded-xl text-xs font-semibold transition active:scale-95 disabled:opacity-50"
+          onClick={() => setIsOpen(true)}
+          className="w-full py-3 px-4 rounded-xl bg-white dark:bg-[#121212] hover:bg-slate-50 dark:hover:bg-[#181818] border border-slate-200 dark:border-[#222222] text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center justify-between shadow-sm active:scale-98 cursor-pointer"
         >
-          <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>สุ่มไพ่ใหม่</span>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>ดูดวงไพ่ทาโรต์เสริมพลังใจประจำวัน (Daily Flight Tarot)</span>
+          </div>
+          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+            แตะเพื่อเปิดดู
+          </span>
         </button>
       </div>
 
-      {/* Interactive Tarot Display */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        
-        {/* Card 3D Flip Container */}
-        <div className="md:col-span-4 flex flex-col items-center justify-center">
+      {/* Luxury Tarot Modal Sheet */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in">
           <div 
-            onClick={handleFlipToggle}
-            className="w-44 h-72 sm:w-48 sm:h-80 perspective-1000 cursor-pointer group select-none"
-            title="คลิกเพื่อพลิกดูไพ่"
-          >
-            <div 
-              className={`relative w-full h-full duration-700 transform-style-preserve-3d transition-transform ${
-                isFlipped ? 'rotate-y-180' : ''
-              }`}
-            >
-              {/* Front side (Uber Ink Black Geometric Card Back) */}
-              <div className="absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-[#111111] via-[#000000] to-[#1a1a1a] p-3.5 shadow-uber-elevated backface-hidden border-2 border-[#333333] flex flex-col items-center justify-between text-white">
-                <div className="w-full flex justify-between text-[10px] font-mono tracking-widest text-[#757575]">
-                  <span>✦ 00</span>
-                  <span>FLIGHT TAROT</span>
-                  <span>00 ✦</span>
-                </div>
+            className="fixed inset-0" 
+            onClick={() => setIsOpen(false)}
+          ></div>
 
-                <div className="w-24 h-24 rounded-full border border-dashed border-[#444444] flex items-center justify-center text-3xl group-hover:scale-110 transition-transform bg-[#141414]">
-                  ✈️
-                </div>
-
-                <div className="text-center">
-                  <span className="text-[11px] font-bold bg-[#1f1f1f] border border-[#333333] px-3 py-1 rounded-full text-[#a6a6a6]">
-                    แตะเพื่อเปิดไพ่
-                  </span>
-                </div>
+          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#292929] p-5 sm:p-6 shadow-2xl z-10 space-y-4 animate-slide-up max-h-[90vh] overflow-y-auto">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#222222] pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  ไพ่ทาโรต์เสริมพลังใจประจำวัน
+                </h3>
               </div>
 
-              {/* Back side (Revealed Tarot Card) */}
-              <div className="absolute inset-0 w-full h-full rounded-2xl bg-[#000000] p-2 shadow-uber-elevated backface-hidden rotate-y-180 border-2 border-white overflow-hidden flex flex-col items-center">
-                {card ? (
-                  <div className="w-full h-full rounded-xl overflow-hidden relative bg-[#141414] flex items-center justify-center">
-                    <img 
-                      src={card.image} 
-                      alt={card.name} 
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/80 to-transparent p-2.5 text-white text-center">
-                      <span className="text-xs font-black block leading-tight">
-                        {card.nameTh || card.name}
-                      </span>
-                      <span className="text-[9px] text-[#a6a6a6] uppercase tracking-wider block">
-                        {card.arcana}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={drawNewCard}
+                  disabled={loading}
+                  className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#1f1f1f] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#282828] text-xs font-bold transition flex items-center gap-1"
+                  title="สุ่มไพ่ใหม่"
+                >
+                  <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">สุ่มใหม่</span>
+                </button>
+
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex flex-col sm:flex-row items-center gap-5 pt-2">
+              
+              {/* 3D Flip Card Container */}
+              <div className="shrink-0 flex flex-col items-center">
+                <div 
+                  onClick={handleFlipToggle}
+                  className="w-36 h-56 sm:w-40 sm:h-64 perspective-1000 cursor-pointer group select-none"
+                  title="แตะเพื่อพลิกดูไพ่"
+                >
+                  <div 
+                    className={`relative w-full h-full duration-700 transform-style-preserve-3d transition-transform ${
+                      isFlipped ? 'rotate-y-180' : ''
+                    }`}
+                  >
+                    {/* Front side (Card Back) */}
+                    <div className="absolute inset-0 w-full h-full rounded-2xl bg-slate-900 dark:bg-black p-3 shadow-md backface-hidden border-2 border-slate-700 dark:border-slate-800 flex flex-col items-center justify-between text-white">
+                      <span className="text-[9px] font-mono tracking-widest text-slate-400">TAROT</span>
+                      <div className="w-16 h-16 rounded-full border border-dashed border-slate-500 flex items-center justify-center text-xl">
+                        ✦
+                      </div>
+                      <span className="text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded-full text-slate-300">
+                        แตะเพื่อพลิก
                       </span>
                     </div>
+
+                    {/* Back side (Revealed Card) */}
+                    <div className="absolute inset-0 w-full h-full rounded-2xl bg-white dark:bg-black p-1.5 shadow-md backface-hidden rotate-y-180 border-2 border-slate-900 dark:border-white overflow-hidden flex flex-col items-center">
+                      {card ? (
+                        <div className="w-full h-full rounded-xl overflow-hidden relative bg-slate-100 dark:bg-[#1a1a1a] flex items-center justify-center">
+                          <img 
+                            src={card.image} 
+                            alt={card.name} 
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/80 to-transparent p-2 text-white text-center">
+                            <span className="text-[11px] font-bold block leading-tight">
+                              {card.nameTh || card.name}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-xs text-slate-400">
+                          กำลังสุ่ม...
+                        </div>
+                      )}
+                    </div>
+
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-xs text-[#6b6b6b]">
-                    กำลังโหลด...
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </div>
-
-          <span className="text-[11px] text-[#6b6b6b] mt-2.5 flex items-center gap-1">
-            <Eye className="w-3 h-3" /> แตะที่การ์ดเพื่อพลิกดู
-          </span>
-        </div>
-
-        {/* Card Details & Reading */}
-        <div className="md:col-span-8 space-y-3.5">
-          {card ? (
-            <>
-              {/* Card Title & Keywords */}
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg sm:text-xl font-black text-white">
-                    {card.nameTh}
-                  </h3>
-                  <span className="text-xs text-white font-mono bg-[#262626] px-2.5 py-0.5 rounded-full border border-[#383838]">
-                    {card.name}
-                  </span>
                 </div>
+                <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                  <Eye className="w-3 h-3" /> แตะเพื่อพลิกไพ่
+                </span>
+              </div>
 
-                {card.keywords && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {card.keywords.map((kw, idx) => (
-                      <span 
-                        key={idx} 
-                        className="text-[11px] font-medium px-2 py-0.5 bg-[#1a1a1a] text-[#a6a6a6] rounded-md border border-[#292929]"
-                      >
-                        #{kw}
+              {/* Card Details */}
+              <div className="flex-1 space-y-2.5 text-xs">
+                {card ? (
+                  <>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                        {card.nameTh}
+                      </h4>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                        {card.name} ({card.arcana})
                       </span>
-                    ))}
-                  </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 font-medium">
+                      {card.energy}
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#1a1a1a] border border-slate-100 dark:border-[#262626] text-slate-700 dark:text-slate-300 leading-relaxed">
+                      <strong className="text-slate-900 dark:text-white block mb-0.5">ความหมาย:</strong>
+                      <p>{card.meaning}</p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-[#1f1f1f] text-slate-900 dark:text-slate-100 leading-relaxed">
+                      <strong className="text-slate-900 dark:text-white block mb-0.5">คำแนะนำวันนี้:</strong>
+                      <p>{card.advice}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="py-6 text-center text-slate-400">กำลังเตรียมไพ่ทาโรต์...</div>
                 )}
               </div>
 
-              {/* Energy Badge */}
-              <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl text-xs font-bold text-amber-300 flex items-center gap-2">
-                <Star className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>{card.energy}</span>
-              </div>
-
-              {/* Meaning */}
-              <div className="p-3.5 bg-[#1a1a1a] rounded-xl border border-[#292929] text-xs leading-relaxed text-slate-200">
-                <strong className="text-[#a6a6a6] block mb-1 uppercase tracking-wider text-[10px]">
-                  ความหมายของไพ่:
-                </strong>
-                <p>{card.meaning}</p>
-              </div>
-
-              {/* Work & Duty Advice */}
-              <div className="p-3.5 bg-[#1f1f1f] rounded-xl border border-[#383838] text-xs leading-relaxed text-white">
-                <strong className="text-uber-blue flex items-center gap-1.5 mb-1 uppercase tracking-wider text-[10px]">
-                  <Sparkles className="w-3 h-3" />
-                  คำแนะนำสำหรับการเดินทาง & การทำงาน:
-                </strong>
-                <p>{card.advice}</p>
-              </div>
-            </>
-          ) : (
-            <div className="p-6 text-center text-[#6b6b6b] text-xs">
-              กำลังเตรียมไพ่ทาโรต์ประจำวัน...
             </div>
-          )}
-        </div>
 
-      </div>
-    </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-bold transition active:scale-95 mt-2"
+            >
+              ปิดหน้าต่าง
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

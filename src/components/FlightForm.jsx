@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Sparkles, AlertCircle, ArrowRight, RotateCcw, Plus, Minus, Calendar } from 'lucide-react';
 
 export default function FlightForm({ onCalculate, onReset }) {
-  // Helper to get formatted tomorrow date at given hour
   const getPresetDateTime = (targetHour = 6, isToday = false) => {
     const d = new Date();
     if (!isToday) {
@@ -29,14 +28,12 @@ export default function FlightForm({ onCalculate, onReset }) {
   });
   const [error, setError] = useState('');
 
-  // Persist values to localStorage
   useEffect(() => {
     localStorage.setItem('uber_planner_reportTime', reportTime);
     localStorage.setItem('uber_planner_prepTime', prepTime);
     localStorage.setItem('uber_planner_travelTime', travelTime);
   }, [reportTime, prepTime, travelTime]);
 
-  // Stepper logic (add/subtract 15 minutes = 0.15 in decimal representation or real minutes)
   const adjustTimeByMinutes = (currentVal, deltaMinutes) => {
     const val = parseFloat(currentVal) || 0;
     const hours = Math.floor(val);
@@ -44,12 +41,11 @@ export default function FlightForm({ onCalculate, onReset }) {
     let totalMinutes = hours * 60 + decimalMins + deltaMinutes;
 
     if (totalMinutes < 0) totalMinutes = 0;
-    if (totalMinutes > 600) totalMinutes = 600; // max 10 hours
+    if (totalMinutes > 600) totalMinutes = 600;
 
     const newHours = Math.floor(totalMinutes / 60);
     const newMins = totalMinutes % 60;
-    const result = (newHours + newMins / 100).toFixed(2);
-    return result;
+    return (newHours + newMins / 100).toFixed(2);
   };
 
   const handleStepPrep = (delta) => {
@@ -65,7 +61,7 @@ export default function FlightForm({ onCalculate, onReset }) {
     setError('');
 
     if (!reportTime) {
-      setError('กรุณาระบุเวลาเริ่มปฏิบัติหน้าที่ (Report Duty Time)');
+      setError('กรุณาระบุเวลาเริ่มปฏิบัติหน้าที่');
       return;
     }
 
@@ -98,7 +94,6 @@ export default function FlightForm({ onCalculate, onReset }) {
     onReset();
   };
 
-  // Helper preview text
   const formatDecimalPreview = (val) => {
     const num = parseFloat(val);
     if (isNaN(num)) return '';
@@ -110,44 +105,43 @@ export default function FlightForm({ onCalculate, onReset }) {
   };
 
   return (
-    <div className="w-full rounded-2xl bg-[#141414] dark:bg-[#141414] border border-[#292929] p-4 sm:p-6 shadow-uber-card">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#222222] pb-3 mb-5">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            <span>⏱️ กำหนดเวลาปฏิบัติหน้าที่</span>
+    <div className="w-full rounded-2xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#222222] p-4 sm:p-5 shadow-sm transition-colors">
+      
+      {/* Compact Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1f1f1f] pb-2.5 mb-3.5">
+        <div className="flex items-center gap-1.5">
+          <Clock className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+            กำหนดเวลาปฏิบัติหน้าที่
           </h2>
-          <p className="text-xs text-[#a6a6a6]">
-            ระบุเวลาเริ่มงานและระยะเวลาที่ต้องใช้
-          </p>
         </div>
 
         <button
           type="button"
           onClick={handleReset}
-          className="text-xs text-[#a6a6a6] hover:text-white px-2.5 py-1.5 rounded-lg bg-[#1f1f1f] hover:bg-[#262626] border border-[#333333] transition flex items-center gap-1.5 active:scale-95"
+          className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-[#1c1c1c] transition flex items-center gap-1"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-3 h-3" />
           <span>รีเซ็ต</span>
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="mb-3 p-2.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs flex items-center gap-1.5">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleCalculate} className="space-y-5">
-        {/* 1. Report Time & Quick Presets */}
-        <div className="space-y-2.5 bg-[#1a1a1a] p-4 rounded-xl border border-[#292929]">
+      <form onSubmit={handleCalculate} className="space-y-3.5">
+        
+        {/* 1. Report Duty Time */}
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label 
               htmlFor="reportTime" 
-              className="text-xs font-bold uppercase tracking-wider text-[#a6a6a6] flex items-center gap-1.5"
+              className="text-xs font-semibold text-slate-600 dark:text-slate-300"
             >
-              <Calendar className="w-3.5 h-3.5 text-uber-blue" />
               เวลาเริ่มปฏิบัติหน้าที่ (Report Duty Time)
             </label>
           </div>
@@ -157,23 +151,22 @@ export default function FlightForm({ onCalculate, onReset }) {
             type="datetime-local"
             value={reportTime}
             onChange={(e) => setReportTime(e.target.value)}
-            className="w-full bg-[#141414] px-4 py-3 rounded-xl border border-[#333333] text-base font-bold text-white focus:outline-none focus:ring-2 focus:ring-uber-blue transition"
+            className="w-full bg-slate-50 dark:bg-[#181818] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#2a2a2a] text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition tabular-nums"
             required
           />
 
-          {/* Quick Date Presets */}
-          <div className="flex items-center gap-1.5 pt-1 flex-wrap">
-            <span className="text-[11px] text-[#6b6b6b] mr-1">ปุ่มลัด:</span>
+          {/* Quick Date Chips */}
+          <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
             {[
-              { label: '🌅 พรุ่งนี้เช้า 06:00', getter: () => getPresetDateTime(6, false) },
-              { label: '☀️ พรุ่งนี้บ่าย 13:00', getter: () => getPresetDateTime(13, false) },
-              { label: '🌙 คืนนี้ 22:00', getter: () => getPresetDateTime(22, true) },
+              { label: 'พรุ่งนี้ 06:00', getter: () => getPresetDateTime(6, false) },
+              { label: 'พรุ่งนี้ 13:00', getter: () => getPresetDateTime(13, false) },
+              { label: 'คืนนี้ 22:00', getter: () => getPresetDateTime(22, true) },
             ].map((preset, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setReportTime(preset.getter())}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-[#262626] hover:bg-[#333333] text-[#a6a6a6] hover:text-white border border-[#383838] transition active:scale-95"
+                className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#1c1c1c] hover:bg-slate-200 dark:hover:bg-[#262626] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-[#2a2a2a] transition active:scale-95"
               >
                 {preset.label}
               </button>
@@ -181,60 +174,54 @@ export default function FlightForm({ onCalculate, onReset }) {
           </div>
         </div>
 
-        {/* 2. Prep & Travel Controls Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 2. Prep and Travel Row (Side-by-side or stacked cleanly) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           
-          {/* Prep Time Card */}
-          <div className="bg-[#1a1a1a] p-4 rounded-xl border border-[#292929] space-y-3">
-            <div className="flex items-center justify-between">
-              <label 
-                htmlFor="prepTime" 
-                className="text-xs font-bold uppercase tracking-wider text-[#a6a6a6]"
-              >
-                💄 เวลาแต่งตัว / เตรียมตัว
-              </label>
-              <span className="text-xs font-bold text-uber-blue bg-uber-blue/10 px-2 py-0.5 rounded-full border border-uber-blue/20">
+          {/* Prep Time */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-600 dark:text-slate-300">
+                เวลาแต่งตัว / เตรียมตัว
+              </span>
+              <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                 {formatDecimalPreview(prepTime)}
               </span>
             </div>
 
-            {/* Stepper + Input */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => handleStepPrep(-15)}
-                className="w-11 h-11 rounded-xl bg-[#262626] hover:bg-[#333333] border border-[#383838] flex items-center justify-center text-white active:scale-90 transition font-bold"
+                className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1c1c1c] hover:bg-slate-200 dark:hover:bg-[#262626] border border-slate-200 dark:border-[#2a2a2a] flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-90 transition font-bold"
                 title="ลด 15 นาที"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5" />
               </button>
 
-              <div className="relative flex-1">
-                <input
-                  id="prepTime"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="10"
-                  value={prepTime}
-                  onChange={(e) => setPrepTime(e.target.value)}
-                  className="w-full bg-[#141414] px-3.5 py-2.5 rounded-xl border border-[#333333] text-center text-base font-bold text-white focus:outline-none focus:ring-2 focus:ring-uber-blue"
-                  required
-                />
-              </div>
+              <input
+                id="prepTime"
+                type="number"
+                step="0.01"
+                min="0"
+                max="10"
+                value={prepTime}
+                onChange={(e) => setPrepTime(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-[#181818] px-2 py-1.5 rounded-xl border border-slate-200 dark:border-[#2a2a2a] text-center text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 tabular-nums"
+                required
+              />
 
               <button
                 type="button"
                 onClick={() => handleStepPrep(15)}
-                className="w-11 h-11 rounded-xl bg-[#262626] hover:bg-[#333333] border border-[#383838] flex items-center justify-center text-white active:scale-90 transition font-bold"
+                className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1c1c1c] hover:bg-slate-200 dark:hover:bg-[#262626] border border-slate-200 dark:border-[#2a2a2a] flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-90 transition font-bold"
                 title="เพิ่ม 15 นาที"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {/* Quick Chips */}
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-1 flex-wrap">
               {[
                 { label: '45m', val: '0.45' },
                 { label: '1 ชม.', val: '1.00' },
@@ -245,10 +232,10 @@ export default function FlightForm({ onCalculate, onReset }) {
                   key={chip.val}
                   type="button"
                   onClick={() => setPrepTime(chip.val)}
-                  className={`text-xs px-2.5 py-1 rounded-lg transition font-medium ${
+                  className={`text-[10px] px-2 py-0.5 rounded-md transition font-medium ${
                     prepTime === chip.val
-                      ? 'bg-white text-black font-bold'
-                      : 'bg-[#262626] hover:bg-[#333333] text-[#a6a6a6] border border-[#383838]'
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-black font-bold'
+                      : 'bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#2a2a2a]'
                   }`}
                 >
                   {chip.label}
@@ -257,57 +244,51 @@ export default function FlightForm({ onCalculate, onReset }) {
             </div>
           </div>
 
-          {/* Travel Time Card */}
-          <div className="bg-[#1a1a1a] p-4 rounded-xl border border-[#292929] space-y-3">
-            <div className="flex items-center justify-between">
-              <label 
-                htmlFor="travelTime" 
-                className="text-xs font-bold uppercase tracking-wider text-[#a6a6a6]"
-              >
-                🚗 เวลาเดินทางไปสถานที่นัดหมาย
-              </label>
-              <span className="text-xs font-bold text-uber-blue bg-uber-blue/10 px-2 py-0.5 rounded-full border border-uber-blue/20">
+          {/* Travel Time */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-600 dark:text-slate-300">
+                เวลาเดินทาง
+              </span>
+              <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                 {formatDecimalPreview(travelTime)}
               </span>
             </div>
 
-            {/* Stepper + Input */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => handleStepTravel(-15)}
-                className="w-11 h-11 rounded-xl bg-[#262626] hover:bg-[#333333] border border-[#383838] flex items-center justify-center text-white active:scale-90 transition font-bold"
+                className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1c1c1c] hover:bg-slate-200 dark:hover:bg-[#262626] border border-slate-200 dark:border-[#2a2a2a] flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-90 transition font-bold"
                 title="ลด 15 นาที"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5" />
               </button>
 
-              <div className="relative flex-1">
-                <input
-                  id="travelTime"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="10"
-                  value={travelTime}
-                  onChange={(e) => setTravelTime(e.target.value)}
-                  className="w-full bg-[#141414] px-3.5 py-2.5 rounded-xl border border-[#333333] text-center text-base font-bold text-white focus:outline-none focus:ring-2 focus:ring-uber-blue"
-                  required
-                />
-              </div>
+              <input
+                id="travelTime"
+                type="number"
+                step="0.01"
+                min="0"
+                max="10"
+                value={travelTime}
+                onChange={(e) => setTravelTime(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-[#181818] px-2 py-1.5 rounded-xl border border-slate-200 dark:border-[#2a2a2a] text-center text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 tabular-nums"
+                required
+              />
 
               <button
                 type="button"
                 onClick={() => handleStepTravel(15)}
-                className="w-11 h-11 rounded-xl bg-[#262626] hover:bg-[#333333] border border-[#383838] flex items-center justify-center text-white active:scale-90 transition font-bold"
+                className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1c1c1c] hover:bg-slate-200 dark:hover:bg-[#262626] border border-slate-200 dark:border-[#2a2a2a] flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-90 transition font-bold"
                 title="เพิ่ม 15 นาที"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {/* Quick Chips */}
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-1 flex-wrap">
               {[
                 { label: '30m', val: '0.30' },
                 { label: '45m', val: '0.45' },
@@ -319,10 +300,10 @@ export default function FlightForm({ onCalculate, onReset }) {
                   key={chip.val}
                   type="button"
                   onClick={() => setTravelTime(chip.val)}
-                  className={`text-xs px-2.5 py-1 rounded-lg transition font-medium ${
+                  className={`text-[10px] px-2 py-0.5 rounded-md transition font-medium ${
                     travelTime === chip.val
-                      ? 'bg-white text-black font-bold'
-                      : 'bg-[#262626] hover:bg-[#333333] text-[#a6a6a6] border border-[#383838]'
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-black font-bold'
+                      : 'bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#2a2a2a]'
                   }`}
                 >
                   {chip.label}
@@ -336,11 +317,11 @@ export default function FlightForm({ onCalculate, onReset }) {
         {/* Calculate Action Button */}
         <button
           type="submit"
-          className="w-full py-4 px-6 bg-white text-black font-black text-base rounded-xl hover:bg-slate-200 transition active:scale-[0.98] shadow-uber-sm flex items-center justify-center gap-2 group cursor-pointer"
+          className="w-full py-3 px-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-sm rounded-xl transition active:scale-[0.98] shadow-sm flex items-center justify-center gap-2 cursor-pointer mt-1"
         >
-          <Sparkles className="w-5 h-5 text-uber-blue group-hover:rotate-12 transition-transform" />
-          <span>คำนวณตารางเวลาและแผนพักผ่อน</span>
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          <Sparkles className="w-4 h-4 text-amber-400 dark:text-amber-500" />
+          <span>คำนวณตารางเวลาพักผ่อน</span>
+          <ArrowRight className="w-4 h-4 opacity-70" />
         </button>
       </form>
     </div>
