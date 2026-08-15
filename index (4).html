@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐰 แพลนเนอร์เริ่ดๆ เตรียมบินกับน้องกระต่าย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-pink-primary: #ec4899;
+            --color-pink-accent: #db2777;
+            --color-pink-light: #fce7f6;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fce7f6 0%, #fff0f5 100%);
+            min-height: 100vh;
+        }
+        .card {
+            box-shadow: 0 10px 30px -5px rgba(236, 72, 153, 0.2);
+            border-top: 5px solid var(--color-pink-primary);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .result-box {
+            background: linear-gradient(135deg, #fce7f6 0%, #fff0f5 100%);
+            border-left: 4px solid var(--color-pink-primary);
+        }
+        .wake-time {
+            color: var(--color-pink-accent);
+            font-size: 2.5rem;
+        }
+        
+        /* Mobile optimization */
+        @media (max-width: 640px) {
+            .wake-time {
+                font-size: 1.75rem;
+            }
+            body {
+                padding: 0.5rem;
+            }
+            .card {
+                padding: 1rem !important;
+            }
+            h1 {
+                font-size: 1.5rem !important;
+                line-height: 1.3;
+            }
+            h2 {
+                font-size: 1.25rem !important;
+            }
+            h3 {
+                font-size: 1.1rem !important;
+            }
+            .text-3xl {
+                font-size: 1.5rem !important;
+            }
+            .text-2xl {
+                font-size: 1.25rem !important;
+            }
+            .text-xl {
+                font-size: 1.1rem !important;
+            }
+        }
+        .peer:checked + label {
+            background-color: var(--color-pink-primary);
+            color: white;
+            border-color: var(--color-pink-primary);
+            box-shadow: 0 4px 8px rgba(236, 72, 153, 0.3);
+            transform: scale(1.05);
+        }
+        .choice-label {
+            background-color: #fff0f5;
+            transition: all 0.2s ease-in-out;
+        }
+        .choice-label:hover {
+            background-color: #fecaca;
+            transform: translateY(-1px);
+        }
+        .pink-button {
+            background: linear-gradient(135deg, var(--color-pink-primary) 0%, var(--color-pink-accent) 100%);
+            transition: all 0.3s ease;
+        }
+        .pink-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 16px rgba(236, 72, 153, 0.4);
+        }
+        
+        /* Slot Machine Styles */
+        .slot-machine {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .slot-container {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .slot {
+            width: 70px;
+            height: 90px;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+            overflow: hidden;
+            position: relative;
+        }
+        .slot-spinning {
+            animation: spin 0.1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100px); }
+        }
+        .fortune-text {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Mobile optimization for slot machine */
+        @media (max-width: 640px) {
+            .slot-machine {
+                padding: 15px;
+                border-radius: 15px;
+            }
+            .slot-container {
+                padding: 10px;
+                gap: 6px;
+            }
+            .slot {
+                width: 60px;
+                height: 75px;
+                font-size: 2.5rem;
+            }
+            #fortuneResult {
+                font-size: 0.9rem !important;
+            }
+            #fortuneText {
+                padding: 1rem !important;
+                font-size: 0.85rem !important;
+                line-height: 1.5 !important;
+            }
+        }
+        
+        /* Sleep Calculator Styles */
+        .sleep-calc-card {
+            background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%);
+            border-radius: 15px;
+            padding: 20px;
+            border: 3px solid #a78bfa;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #cbd5e1;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: var(--color-pink-primary);
+        }
+        .toggle-knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(30px);
+        }
+        
+        @media (max-width: 640px) {
+            .sleep-calc-card {
+                padding: 15px;
+            }
+            .toggle-switch {
+                width: 50px;
+                height: 26px;
+            }
+            .toggle-knob {
+                width: 20px;
+                height: 20px;
+            }
+            .toggle-switch.active .toggle-knob {
+                transform: translateX(24px);
+            }
+            
+            /* Optimize input fields on mobile */
+            input[type="number"],
+            input[type="datetime-local"] {
+                font-size: 16px !important; /* Prevent zoom on iOS */
+            }
+            
+            /* Adjust button sizes */
+            button {
+                font-size: 0.9rem;
+                padding: 0.6rem 1rem;
+            }
+            
+            /* Make grid items stack better on mobile */
+            .grid-cols-2 {
+                gap: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .wake-time {
+                font-size: 2rem;
+            }
+            .slot {
+                width: 60px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+        }
+        
+        /* Pulse animation */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .pulse-animate {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+
+    <div id="app" class="max-w-4xl mx-auto mt-4">
+        <!-- Header -->
+        <header class="text-center mb-6 md:mb-8 px-2">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">💖 แพลนเนอร์น่ารัก เตรียมตัวบินลั้ลลา</h1>
+            <p class="text-pink-600 text-base md:text-lg">มาคำนวณเวลาตื่นนอนสุดเป๊ะปัง สำหรับไฟลท์เริ่ดๆ กันนะ!</p>
+        </header>
+
+        <!-- Main Card -->
+        <div class="card bg-white p-4 md:p-6 lg:p-8 rounded-xl mb-6 md:mb-8">
+            <h2 class="text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-gray-700 border-b-2 border-pink-200 pb-3">
+                🎀 ข้อมูลการเดินทางของเธอ
+            </h2>
+            
+            <div class="space-y-4 md:space-y-6">
+                <!-- Input Group: Report Time -->
+                <div class="bg-pink-50 p-3 md:p-4 rounded-lg">
+                    <label for="reportTime" class="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
+                        ⏰ เวลาที่ต้อง 'ติ๊กต็อก' (เริ่มงาน) ของเธอน้า
+                    </label>
+                    <input type="datetime-local" id="reportTime" class="w-full p-2.5 md:p-3 border-2 border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition text-base" required>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <!-- Input Group: Preparation Time -->
+                    <div class="bg-purple-50 p-3 md:p-4 rounded-lg">
+                        <label for="prepTimeInput" class="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+                            💄 เวลาแต่งตัวสวย/หล่อ
+                        </label>
+                        <p class="text-xs text-gray-600 mb-2 md:mb-3">
+                            ⏱️ กรอกแบบ: 1.30 = 1 ชม. 30 นาที, 0.45 = 45 นาที
+                        </p>
+                        <div class="relative">
+                            <input 
+                                type="number" 
+                                id="prepTimeInput" 
+                                step="0.01" 
+                                min="0" 
+                                max="10" 
+                                placeholder="1.30"
+                                class="w-full p-2.5 md:p-3 pr-16 md:pr-20 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base md:text-lg font-semibold"
+                                required
+                                value="1.30">
+                            <span class="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium text-xs md:text-sm">ชั่วโมง</span>
+                        </div>
+                        <div class="mt-2 flex gap-1.5 md:gap-2 flex-wrap">
+                            <button type="button" onclick="setPrepTime(1.00)" class="text-xs bg-purple-200 hover:bg-purple-300 px-2.5 md:px-3 py-1 rounded-full transition">1 ชม.</button>
+                            <button type="button" onclick="setPrepTime(1.30)" class="text-xs bg-purple-200 hover:bg-purple-300 px-2.5 md:px-3 py-1 rounded-full transition">1.5 ชม.</button>
+                            <button type="button" onclick="setPrepTime(2.00)" class="text-xs bg-purple-200 hover:bg-purple-300 px-2.5 md:px-3 py-1 rounded-full transition">2 ชม.</button>
+                        </div>
+                    </div>
+
+                    <!-- Input Group: Travel Time -->
+                    <div class="bg-blue-50 p-3 md:p-4 rounded-lg">
+                        <label for="travelTimeInput" class="block text-sm md:text-base font-semibold text-gray-700 mb-2">
+                            🚗 เวลาเดินทางไปถึงที่นัดหมาย
+                        </label>
+                        <p class="text-xs text-gray-600 mb-2 md:mb-3">
+                            ⏱️ กรอกแบบ: 1.15 = 1 ชม. 15 นาที, 0.45 = 45 นาที
+                        </p>
+                        <div class="relative">
+                            <input 
+                                type="number" 
+                                id="travelTimeInput" 
+                                step="0.01" 
+                                min="0" 
+                                max="10" 
+                                placeholder="1.00"
+                                class="w-full p-2.5 md:p-3 pr-16 md:pr-20 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base md:text-lg font-semibold"
+                                required
+                                value="1.00">
+                            <span class="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium text-xs md:text-sm">ชั่วโมง</span>
+                        </div>
+                        <div class="mt-2 flex gap-1.5 md:gap-2 flex-wrap">
+                            <button type="button" onclick="setTravelTime(0.45)" class="text-xs bg-blue-200 hover:bg-blue-300 px-2.5 md:px-3 py-1 rounded-full transition">45 นาที</button>
+                            <button type="button" onclick="setTravelTime(1.00)" class="text-xs bg-blue-200 hover:bg-blue-300 px-2.5 md:px-3 py-1 rounded-full transition">1 ชม.</button>
+                            <button type="button" onclick="setTravelTime(1.15)" class="text-xs bg-blue-200 hover:bg-blue-300 px-2.5 md:px-3 py-1 rounded-full transition">1.25 ชม.</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calculate Button -->
+            <button id="calculateButton" class="w-full mt-6 md:mt-8 py-3 md:py-4 px-4 md:px-6 pink-button text-white font-bold text-base md:text-lg rounded-xl transition duration-200 focus:outline-none focus:ring-4 focus:ring-pink-300 shadow-lg">
+                ✨ คำนวณเวลาให้หนูหน่อย! ✨
+            </button>
+        </div>
+
+        <!-- Results Display Area -->
+        <div id="results" class="hidden">
+            <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-gray-700 text-center">
+                💖 ตารางเวลาสุด Cute ของเธอ!
+            </h2>
+
+            <!-- Wake-up Time (Key Result) -->
+            <div class="result-box p-4 md:p-6 rounded-xl mb-4 md:mb-6 pulse-animate">
+                <p id="wakeupLabel" class="text-base md:text-lg font-semibold text-gray-700">☀️ เวลาตื่นนอนที่แนะนำ:</p>
+                <p id="wakeupTime" class="wake-time font-extrabold mt-2">00:00 AM</p>
+                <p class="text-xs md:text-sm text-gray-600 mt-2">🎯 ตั้งปลุกไว้เลยนะ!</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
+                <!-- Departure Time -->
+                <div class="bg-gradient-to-br from-violet-100 to-violet-200 p-4 md:p-5 rounded-xl border-2 border-violet-300">
+                    <p class="text-xs md:text-sm text-violet-700 font-bold mb-1">💖 เวลาออกจากบ้าน</p>
+                    <p id="departureTime" class="text-2xl md:text-3xl font-bold text-violet-900 mt-1">00:00 AM</p>
+                </div>
+                
+                <!-- Report Time Display -->
+                <div class="bg-gradient-to-br from-pink-100 to-pink-200 p-4 md:p-5 rounded-xl border-2 border-pink-300">
+                    <p class="text-xs md:text-sm text-pink-700 font-bold mb-1">✈️ เวลาถึงจุดหมาย</p>
+                    <p id="arrivalTime" class="text-2xl md:text-3xl font-bold text-pink-900 mt-1">00:00 AM</p>
+                </div>
+            </div>
+            
+            <!-- Sleep Times -->
+            <div class="mb-4 md:mb-6">
+                <h3 class="text-lg md:text-xl font-bold text-gray-700 mb-3 md:mb-4 text-center">🌙 เวลาเข้านอนแนะนำ (คืนก่อนไฟลท์)</h3>
+                <div class="grid grid-cols-2 gap-2 md:gap-4">
+                    <!-- 8-Hour Sleep -->
+                    <div class="bg-gradient-to-br from-green-100 to-green-200 p-3 md:p-4 rounded-xl border-2 border-green-300">
+                        <p class="text-xs md:text-sm text-green-700 font-bold mb-1">✨ นอนเต็มอิ่ม 8 ชม.</p>
+                        <p id="bedTime8h" class="text-lg md:text-2xl font-bold text-green-900 mt-1">00:00 AM</p>
+                    </div>
+
+                    <!-- 7-Hour Sleep -->
+                    <div class="bg-gradient-to-br from-lime-100 to-lime-200 p-3 md:p-4 rounded-xl border-2 border-lime-300">
+                        <p class="text-xs md:text-sm text-lime-700 font-bold mb-1">🕰️ นอน 7 ชม.</p>
+                        <p id="bedTime7h" class="text-lg md:text-2xl font-bold text-lime-900 mt-1">00:00 AM</p>
+                    </div>
+                    
+                    <!-- 6-Hour Sleep -->
+                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-200 p-3 md:p-4 rounded-xl border-2 border-yellow-300">
+                        <p class="text-xs md:text-sm text-yellow-700 font-bold mb-1">⚠️ นอน 6 ชม.</p>
+                        <p id="bedTime6h" class="text-lg md:text-2xl font-bold text-yellow-900 mt-1">00:00 AM</p>
+                    </div>
+
+                    <!-- 5-Hour Sleep -->
+                    <div class="bg-gradient-to-br from-red-100 to-red-200 p-3 md:p-4 rounded-xl border-2 border-red-300">
+                        <p class="text-xs md:text-sm text-red-700 font-bold mb-1">🚨 นอน 5 ชม.</p>
+                        <p id="bedTime5h" class="text-lg md:text-2xl font-bold text-red-900 mt-1">00:00 AM</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sleep Calculator -->
+            <div class="sleep-calc-card">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-lg md:text-xl font-bold text-purple-900">😴 คำนวณชั่วโมงการนอน</h3>
+                    <div class="toggle-switch" id="sleepCalcToggle" onclick="toggleSleepCalc()">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+                
+                <div id="sleepCalcContent" class="hidden">
+                    <p class="text-purple-700 text-xs md:text-sm mb-3 md:mb-4">ระบุเวลาที่จะเข้านอน แล้วดูว่าจะได้นอนกี่ชั่วโมง</p>
+                    
+                    <div class="bg-white p-3 md:p-4 rounded-lg mb-3 md:mb-4">
+                        <label for="bedTimeInput" class="block text-xs md:text-sm font-semibold text-gray-700 mb-2">
+                            🛏️ เวลาที่คิดว่าจะเข้านอน
+                        </label>
+                        <input type="datetime-local" id="bedTimeInput" class="w-full p-2.5 md:p-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base">
+                        <button onclick="calculateSleepHours()" class="w-full mt-2 md:mt-3 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 md:px-4 rounded-lg transition text-sm md:text-base">
+                            คำนวณเลย!
+                        </button>
+                    </div>
+                    
+                    <div id="sleepResult" class="hidden bg-white p-3 md:p-4 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-700 font-semibold text-sm md:text-base">ชั่วโมงการนอน:</span>
+                            <span id="sleepHours" class="text-2xl md:text-3xl font-bold text-purple-900">0</span>
+                        </div>
+                        <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div id="sleepBar" class="h-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p id="sleepComment" class="text-xs md:text-sm text-gray-600 mt-2 text-center"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error/Message Box -->
+        <div id="messageBox" class="hidden mt-4 p-4 rounded-lg font-medium shadow-lg" role="alert"></div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-6 md:mt-8 pb-3 md:pb-4 text-gray-500 text-xs md:text-sm px-2">
+            <p>💕 ขอให้การเดินทางของเธอราบรื่นและปลอดภัยนะคะ 💕</p>
+        </footer>
+
+        <!-- Slot Machine Fortune Teller -->
+        <div class="slot-machine mb-6 md:mb-8">
+            <div class="text-center mb-3 md:mb-4">
+                <h3 class="text-xl md:text-2xl font-bold text-white mb-2">🎰 เครื่องทำนายโชคลาภวันนี้</h3>
+                <p class="text-yellow-100 text-xs md:text-sm">กดปุ่มเพื่อดูดวงการเดินทางของเธอ!</p>
+            </div>
+            <div class="slot-container mb-3 md:mb-4">
+                <div class="slot" id="slot1">🎰</div>
+                <div class="slot" id="slot2">🎰</div>
+                <div class="slot" id="slot3">🎰</div>
+            </div>
+            <button onclick="spinSlots()" class="w-full bg-white text-yellow-600 font-bold py-2.5 md:py-3 px-4 md:px-6 rounded-lg hover:bg-yellow-50 transition duration-200 shadow-lg text-sm md:text-base">
+                ✨ ทำนายดวงเลย! ✨
+            </button>
+            <div id="fortuneResult" class="mt-3 md:mt-4 text-center text-white font-semibold text-base md:text-lg hidden">
+                <p id="fortuneText" class="fortune-text bg-white px-4 py-2 rounded-lg"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Slot Machine Emojis and Fortunes
+        const slotEmojis = ['🍀', '⭐', '💎', '🌈', '🎯', '💰', '🦄', '🌸', '✨', '🎨', '🌺', '💝'];
+        
+        // Expanded fortunes with positive quotes
+        const fortunes = {
+            // Triple matches - Super Lucky
+            '🍀🍀🍀': { 
+                text: 'โชคดีสุดๆ! วันนี้ทุกอย่างราบรื่น ไฟลท์ไม่ดีเลย์แน่นอน! 🎉\n"ความสำเร็จเริ่มต้นจากการเชื่อในตัวเอง" เชื่อมั่นในการเดินทางของเธอนะ', 
+                color: 'from-green-400 to-emerald-500' 
+            },
+            '⭐⭐⭐': { 
+                text: 'ดาวเคราะห์เรียงตัว! วันนี้มีแต่เซอร์ไพรส์ดีๆ รอเธออยู่ 🌟\n"เธอสดใสเหมือนดวงดาว ส่องสว่างทุกที่ที่เธอไป" ให้รอยยิ้มของเธอเป็นของขวัญแก่คนรอบข้างนะ', 
+                color: 'from-yellow-400 to-amber-500' 
+            },
+            '💎💎💎': { 
+                text: 'เจอของมีค่า! อาจได้อัพเกรดที่นั่ง หรือเจอคนดีๆ ✨\n"เธอมีค่ามากกว่าเพชรนะรู้ไหม" วันนี้มีคนเห็นคุณค่าของเธอแน่นอน', 
+                color: 'from-cyan-400 to-blue-500' 
+            },
+            '🌈🌈🌈': { 
+                text: 'หลังฝนย่อมมีรุ้ง! วันนี้มีความสุขรออยู่ 🌺\n"ทุกวันคือโอกาสใหม่ที่สวยงาม" เปิดใจรับสิ่งดีๆ ที่กำลังจะมานะ', 
+                color: 'from-purple-400 to-pink-500' 
+            },
+            '🎯🎯🎯': { 
+                text: 'เป้าหมายสำเร็จ! ทุกอย่างเป๊ะตามแผน 🎪\n"ความมุ่งมั่นของเธอคือกุญแจสู่ความสำเร็จ" วันนี้จะเป็นวันที่สมบูรณ์แบบ', 
+                color: 'from-red-400 to-orange-500' 
+            },
+            '💰💰💰': { 
+                text: 'โชคลาภทางการเงิน! อาจได้ส่วนลดหรือของฟรี 💵\n"ความอุดมสมบูรณ์ไหลมาหาเธอเสมอ" เปิดใจรับพรจากจักรวาลนะ', 
+                color: 'from-green-500 to-teal-500' 
+            },
+            '🦄🦄🦄': { 
+                text: 'มหัศจรรย์กำลังจะเกิด! วันนี้เป็นวันพิเศษมากๆ 🎨\n"เธอพิเศษและไม่เหมือนใคร เชื่อในความมหัศจรรย์" สิ่งวิเศษรอเธออยู่', 
+                color: 'from-pink-500 to-rose-500' 
+            },
+            '🌸🌸🌸': { 
+                text: 'บานสะพรั่ง! ความรักและมิตรภาพดีงาม 💗\n"เธอคือดอกไม้ที่บานสวยในสายตาคนที่รักเธอ" แบ่งปันความอบอุ่นให้คนรอบข้างนะ', 
+                color: 'from-pink-400 to-red-400' 
+            },
+            '✨✨✨': { 
+                text: 'เปล่งประกาย! วันนี้เธอจะโดดเด่นและดึงดูดใจ ⚡\n"แสงสว่างของเธอสามารถส่องทางให้คนอื่นได้" มั่นใจในตัวเองนะ', 
+                color: 'from-amber-400 to-yellow-500' 
+            },
+            '🎨🎨🎨': { 
+                text: 'ความคิดสร้างสรรค์พุ่งสูง! วันนี้ไอเดียเจ๋งๆ ไหลมา 🖌️\n"เธอเป็นศิลปินแห่งชีวิตของตัวเอง" วาดภาพความฝันให้สวยงาม', 
+                color: 'from-indigo-400 to-purple-500' 
+            },
+            '🌺🌺🌺': { 
+                text: 'เบิกบานใจ! พลังงานบวกล้นเหลือวันนี้ 🌻\n"ความสุขเป็นทางเลือก และวันนี้เธอเลือกความสุข" ยิ้มให้ชีวิตนะ', 
+                color: 'from-rose-400 to-pink-500' 
+            },
+            '💝💝💝': { 
+                text: 'ความรักล้นหลาม! มีคนคิดถึงเธออยู่นะ 💕\n"เธอคือของขวัญที่มีค่าที่สุด" วันนี้รับรักและให้รักด้วยหัวใจเปิดกว้าง', 
+                color: 'from-red-500 to-pink-500' 
+            },
+            
+            // Double matches - Good luck
+            '🍀🍀': { 
+                text: 'โชคดีมาก! วันนี้มีเซอร์ไพรส์เล็กๆ รออยู่ 🎁\n"โชคดีมักมาหาคนที่พร้อม" เปิดใจรับสิ่งดีๆ นะ', 
+                color: 'from-green-300 to-emerald-400' 
+            },
+            '⭐⭐': { 
+                text: 'ส่องแสง! วันนี้เธอจะได้รับคำชมเชย ⭐\n"ความพยายามของเธอมีคนเห็นอยู่" ภูมิใจในตัวเองได้นะ', 
+                color: 'from-yellow-300 to-amber-400' 
+            },
+            '💎💎': { 
+                text: 'มีคุณค่า! วันนี้เธอจะรู้สึกพิเศษ 💫\n"เธอล้ำค่ากว่าที่เธอคิด" เชื่อมั่นในตัวเองให้มากขึ้น', 
+                color: 'from-cyan-300 to-blue-400' 
+            },
+            '🌈🌈': { 
+                text: 'สดใส! บรรยากาศวันนี้ดีมาก 🌤️\n"ทุกวันมีความสวยงามในแบบของมันเอง" สังเกตสิ่งดีๆ รอบตัวนะ', 
+                color: 'from-purple-300 to-pink-400' 
+            },
+            '🎯🎯': { 
+                text: 'ตรงเป้า! สิ่งที่วางแผนไว้จะสำเร็จ 🎪\n"ทุกก้าวเล็กๆ นำไปสู่ความสำเร็จใหญ่" เดินหน้าต่อไปนะ', 
+                color: 'from-red-300 to-orange-400' 
+            },
+            '💰💰': { 
+                text: 'คุ้มค่า! วันนี้จะได้ดีลดีๆ 🛍️\n"ความอุดมสมบูรณ์อยู่รอบตัวเธอ" เปิดตารับดีๆ นะ', 
+                color: 'from-green-400 to-teal-400' 
+            },
+            
+            // Single or mixed - Moderate luck with positive messages
+            '🦄': {
+                text: 'พิเศษ! วันนี้มีบางอย่างไม่ธรรมดารอเธออยู่ 🌟\n"เชื่อในความมหัศจรรย์ มันจะเกิดขึ้นจริง" ลุยต่อไปนะ',
+                color: 'from-pink-400 to-purple-400'
+            },
+            '🌸': {
+                text: 'บานสดใส! วันนี้เป็นวันที่งดงาม 🌷\n"ความงามของเธอเบิกบานเหมือนดอกไม้" ยิ้มแย้มไปเรื่อยนะ',
+                color: 'from-pink-300 to-red-300'
+            },
+            '✨': {
+                text: 'เปล่งประกาย! พลังงานบวกสูงมาก ⚡\n"แสงของเธอส่องสว่างทุกที่ที่ไป" ให้ความสุขกับตัวเองนะ',
+                color: 'from-amber-300 to-yellow-400'
+            },
+            
+            // Default for any other combination
+            'default': { 
+                text: 'โชคดีแบบสมดุล! วันนี้เป็นวันธรรมดาแต่ดี 😊\n"ทุกวันคือของขวัญ และวันนี้ก็เป็นวันพิเศษ" ไปอย่างสบายใจ มีความสุขนะ 💖', 
+                color: 'from-blue-400 to-indigo-500' 
+            }
+        };
+
+        // Quick set functions for prep and travel time
+        function setPrepTime(value) {
+            document.getElementById('prepTimeInput').value = value.toFixed(2);
+        }
+        
+        function setTravelTime(value) {
+            document.getElementById('travelTimeInput').value = value.toFixed(2);
+        }
+
+        // Convert decimal hours to minutes (1.30 = 90 minutes)
+        function decimalHoursToMinutes(decimalHours) {
+            const hours = Math.floor(decimalHours);
+            const decimalMinutes = decimalHours - hours;
+            const minutes = Math.round(decimalMinutes * 100);
+            return (hours * 60) + minutes;
+        }
+
+        // Format decimal hours to readable format (1.30 = "1 ชม. 30 นาที")
+        function formatDecimalHours(decimalHours) {
+            const totalMinutes = decimalHoursToMinutes(decimalHours);
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            
+            if (hours === 0) {
+                return `${minutes} นาที`;
+            } else if (minutes === 0) {
+                return `${hours} ชม.`;
+            } else {
+                return `${hours} ชม. ${minutes} นาที`;
+            }
+        }
+
+        // Cute pickup lines
+        const cutePickupLines = [
+            "มองนาฬิกาทำไมเหรอ? ... อยากให้เธอเป็นเวลาของเราไง 💖",
+            "เป็นคนใจเย็นนะ แต่พอเจอเธอแล้ว... อยากใจร้อนให้เธอมา 'รัก'",
+            "เธอไม่ต้องกลัวเครื่องดีเลย์หรอก ... กลัวใจเราดีเลย์ไปรักคนอื่นดีกว่า 💕",
+            "อากาศเปลี่ยนแปลงบ่อย... แต่ใจเราไม่เปลี่ยนนะ มีแค่เธอคนเดียว 🎀",
+            "ไฟลท์วันนี้ไม่ต้องกลัวเหงา ... เพราะเธอมีเราอยู่ข้างในใจเสมอเลย",
+            "เธอเก่งจัง... เก่งที่ทำให้เรายิ้มได้ตลอดเลย 😊",
+            "ถ้าเราเป็นชุดยูนิฟอร์ม... เราอยากเป็นชุดที่เธอใส่ทุกวัน",
+            "อยากติดแกลม แต่ดัน 'ติดเธอ' มากกว่าทำไงดีน้า?",
+            "เธอไม่ใช่ดาว แต่ทำไมใจเราถึงมีแต่เรื่องของเธอวิบวับไปหมดเลย ✨",
+            "เธอเป็นเหมือน 'ปีกเครื่องบิน' เลยนะ ... ขาดเธอไม่ได้สักข้าง!",
+            "เวลาเธอสบตาเรา... เหมือนเวลาหยุดเดินเลยรู้มั้ย 💫"
+        ];
+
+        // Slot Machine Function
+        let isSpinning = false;
+        
+        function spinSlots() {
+            if (isSpinning) return;
+            isSpinning = true;
+            
+            const slots = [
+                document.getElementById('slot1'),
+                document.getElementById('slot2'),
+                document.getElementById('slot3')
+            ];
+            
+            // Hide previous result
+            document.getElementById('fortuneResult').classList.add('hidden');
+            
+            // Start spinning animation
+            slots.forEach(slot => slot.classList.add('slot-spinning'));
+            
+            // Spin each slot with delay
+            slots.forEach((slot, index) => {
+                let counter = 0;
+                const interval = setInterval(() => {
+                    slot.textContent = slotEmojis[Math.floor(Math.random() * slotEmojis.length)];
+                    counter++;
+                    
+                    if (counter > 20 + index * 5) {
+                        clearInterval(interval);
+                        slot.classList.remove('slot-spinning');
+                        
+                        // When all slots stop
+                        if (index === 2) {
+                            setTimeout(() => {
+                                showFortune(slots);
+                                isSpinning = false;
+                            }, 300);
+                        }
+                    }
+                }, 100);
+            });
+        }
+        
+        function showFortune(slots) {
+            const symbols = slots.map(s => s.textContent);
+            let result = symbols.join('');
+            let fortuneData;
+            
+            // Check for exact triple match
+            if (symbols[0] === symbols[1] && symbols[1] === symbols[2]) {
+                fortuneData = fortunes[result] || fortunes['default'];
+            }
+            // Check for double match
+            else if (symbols[0] === symbols[1] || symbols[1] === symbols[2] || symbols[0] === symbols[2]) {
+                const matchedSymbol = symbols[0] === symbols[1] ? symbols[0] : 
+                                     symbols[1] === symbols[2] ? symbols[1] : symbols[0];
+                fortuneData = fortunes[matchedSymbol + matchedSymbol] || fortunes[matchedSymbol] || fortunes['default'];
+            }
+            // Single or no match
+            else {
+                // Try to find fortune for individual symbols
+                fortuneData = fortunes[symbols[0]] || fortunes[symbols[1]] || fortunes[symbols[2]] || fortunes['default'];
+            }
+            
+            const fortuneResult = document.getElementById('fortuneResult');
+            const fortuneText = document.getElementById('fortuneText');
+            
+            // Format text with line breaks
+            fortuneText.innerHTML = fortuneData.text.replace(/\n/g, '<br>');
+            fortuneText.className = `bg-gradient-to-r ${fortuneData.color} text-white px-6 py-4 rounded-lg font-bold shadow-lg leading-relaxed`;
+            fortuneResult.classList.remove('hidden');
+            
+            // Scroll to fortune result
+            setTimeout(() => {
+                fortuneResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+
+        // Sleep Calculator Toggle
+        function toggleSleepCalc() {
+            const toggle = document.getElementById('sleepCalcToggle');
+            const content = document.getElementById('sleepCalcContent');
+            
+            toggle.classList.toggle('active');
+            content.classList.toggle('hidden');
+        }
+
+        // Calculate Sleep Hours
+        function calculateSleepHours() {
+            const bedTimeInput = document.getElementById('bedTimeInput').value;
+            const reportTimeInput = document.getElementById('reportTime').value;
+            const prepTimeInput = parseFloat(document.getElementById('prepTimeInput').value);
+            const travelTimeInput = parseFloat(document.getElementById('travelTimeInput').value);
+            
+            if (!bedTimeInput) {
+                showMessage('กรุณาระบุเวลาที่จะเข้านอนด้วยนะ 😊', true);
+                return;
+            }
+
+            if (!reportTimeInput || isNaN(prepTimeInput) || isNaN(travelTimeInput)) {
+                showMessage('กรุณากรอกข้อมูลการเดินทางให้ครบก่อนนะคะ 💕', true);
+                return;
+            }
+            
+            // Convert to minutes
+            const prepTimeMins = decimalHoursToMinutes(prepTimeInput);
+            const travelTimeMins = decimalHoursToMinutes(travelTimeInput);
+            
+            // Calculate wake up time
+            const reportDate = new Date(reportTimeInput);
+            const wakeupDate = new Date(reportDate.getTime() - (prepTimeMins + travelTimeMins) * 60 * 1000);
+            
+            const bedTime = new Date(bedTimeInput);
+            
+            // Calculate hours difference
+            let diffMs = wakeupDate - bedTime;
+            
+            // If negative, bed time is after wake time (likely different day)
+            if (diffMs < 0) {
+                diffMs += 24 * 60 * 60 * 1000; // Add 24 hours
+            }
+            
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            // Display result
+            document.getElementById('sleepHours').textContent = `${hours} ชม. ${minutes} นาที`;
+            document.getElementById('sleepResult').classList.remove('hidden');
+            
+            // Set progress bar and comment
+            const sleepBar = document.getElementById('sleepBar');
+            const sleepComment = document.getElementById('sleepComment');
+            
+            let percentage = (hours / 10) * 100;
+            if (percentage > 100) percentage = 100;
+            
+            sleepBar.style.width = percentage + '%';
+            
+            if (hours >= 8) {
+                sleepBar.className = 'h-full transition-all duration-500 bg-gradient-to-r from-green-400 to-green-600';
+                sleepComment.textContent = '🌟 สุดยอด! นอนเต็มอิ่ม พร้อมลุยเลย!';
+                sleepComment.className = 'text-sm text-green-700 mt-2 text-center font-semibold';
+            } else if (hours >= 7) {
+                sleepBar.className = 'h-full transition-all duration-500 bg-gradient-to-r from-lime-400 to-lime-600';
+                sleepComment.textContent = '😊 ดีมาก! พอเพียงสำหรับการพักผ่อน';
+                sleepComment.className = 'text-sm text-lime-700 mt-2 text-center font-semibold';
+            } else if (hours >= 6) {
+                sleepBar.className = 'h-full transition-all duration-500 bg-gradient-to-r from-yellow-400 to-yellow-600';
+                sleepComment.textContent = '⚠️ พอใช้ได้ แต่อาจเหนื่อยนิดนึง';
+                sleepComment.className = 'text-sm text-yellow-700 mt-2 text-center font-semibold';
+            } else if (hours >= 5) {
+                sleepBar.className = 'h-full transition-all duration-500 bg-gradient-to-r from-orange-400 to-orange-600';
+                sleepComment.textContent = '🚨 น้อยไปหน่อย! ดื่มกาแฟเพิ่มนะ';
+                sleepComment.className = 'text-sm text-orange-700 mt-2 text-center font-semibold';
+            } else {
+                sleepBar.className = 'h-full transition-all duration-500 bg-gradient-to-r from-red-400 to-red-600';
+                sleepComment.textContent = '💀 อันตราย! พยายามนอนให้มากขึ้นนะ';
+                sleepComment.className = 'text-sm text-red-700 mt-2 text-center font-semibold';
+            }
+        }
+
+        // Display random flirt message
+        function displayRandomFlirt() {
+            const messageContainer = document.getElementById('flirtMessage');
+            if (messageContainer) {
+                const randomIndex = Math.floor(Math.random() * cutePickupLines.length);
+                messageContainer.textContent = cutePickupLines[randomIndex];
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            const minute = String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('reportTime').value = `${year}-${month}-${day}T${hour}:${minute}`;
+            document.getElementById('bedTimeInput').value = `${year}-${month}-${day}T22:00`;
+            
+            document.getElementById('calculateButton').addEventListener('click', calculateSchedule);
+        });
+
+        // Format time helper
+        function formatTime(date) {
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM'; 
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            return hours + ':' + minutes + ' ' + ampm;
+        }
+        
+        // Show message helper
+        function showMessage(message, isError = true) {
+            const msgBox = document.getElementById('messageBox');
+            msgBox.className = isError 
+                ? 'mt-4 p-4 bg-red-100 border-2 border-red-400 text-red-800 rounded-lg font-semibold shadow-lg' 
+                : 'mt-4 p-4 bg-green-100 border-2 border-green-400 text-green-800 rounded-lg font-semibold shadow-lg';
+            
+            if (isError) {
+                msgBox.innerHTML = `<span class="text-2xl">😅</span> ${message}`;
+            } else {
+                msgBox.innerHTML = `<span class="text-2xl">✨</span> ${message}`;
+            }
+            msgBox.classList.remove('hidden');
+            
+            setTimeout(() => {
+                msgBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Main calculation function
+        function calculateSchedule() {
+            const reportTimeInput = document.getElementById('reportTime').value;
+            const prepTimeInput = parseFloat(document.getElementById('prepTimeInput').value);
+            const travelTimeInput = parseFloat(document.getElementById('travelTimeInput').value);
+            
+            document.getElementById('messageBox').classList.add('hidden');
+            
+            // Validation
+            if (!reportTimeInput || isNaN(prepTimeInput) || isNaN(travelTimeInput)) {
+                showMessage('อุ๊ย! กรุณากรอกข้อมูลให้ครบทุกช่องก่อนนะคะ 💕', true);
+                document.getElementById('results').classList.add('hidden');
+                return;
+            }
+
+            if (prepTimeInput < 0 || prepTimeInput > 10) {
+                showMessage('เวลาแต่งตัวต้องอยู่ระหว่าง 0-10 ชั่วโมงนะคะ 😊', true);
+                return;
+            }
+
+            if (travelTimeInput < 0 || travelTimeInput > 10) {
+                showMessage('เวลาเดินทางต้องอยู่ระหว่าง 0-10 ชั่วโมงนะคะ 😊', true);
+                return;
+            }
+
+            // Convert decimal hours to minutes
+            const prepTimeMins = decimalHoursToMinutes(prepTimeInput);
+            const travelTimeMins = decimalHoursToMinutes(travelTimeInput);
+
+            const reportDate = new Date(reportTimeInput);
+            const reportTimeMs = reportDate.getTime();
+            
+            const totalPrepTravelTimeMins = prepTimeMins + travelTimeMins;
+            const totalPrepTravelTimeMs = totalPrepTravelTimeMins * 60 * 1000;
+            const travelTimeMs = travelTimeMins * 60 * 1000;
+            
+            // Calculations
+            const departureTimeMs = reportTimeMs - travelTimeMs;
+            const departureDate = new Date(departureTimeMs);
+
+            const wakeupTimeMs = reportTimeMs - totalPrepTravelTimeMs;
+            const wakeupDate = new Date(wakeupTimeMs);
+
+            const bedTime8hDate = new Date(wakeupTimeMs - 8 * 60 * 60 * 1000);
+            const bedTime7hDate = new Date(wakeupTimeMs - 7 * 60 * 60 * 1000);
+            const bedTime6hDate = new Date(wakeupTimeMs - 6 * 60 * 60 * 1000);
+            const bedTime5hDate = new Date(wakeupTimeMs - 5 * 60 * 60 * 1000);
+
+            // Display results with formatted time
+            const prepTimeFormatted = formatDecimalHours(prepTimeInput);
+            const travelTimeFormatted = formatDecimalHours(travelTimeInput);
+            
+            document.getElementById('wakeupLabel').textContent = `☀️ เวลาตื่นนอนที่แนะนำ: (แต่งตัว ${prepTimeFormatted} + เดินทาง ${travelTimeFormatted})`;
+            document.getElementById('wakeupTime').textContent = formatTime(wakeupDate);
+            document.getElementById('departureTime').textContent = formatTime(departureDate);
+            document.getElementById('arrivalTime').textContent = formatTime(reportDate);
+            document.getElementById('bedTime8h').textContent = formatTime(bedTime8hDate);
+            document.getElementById('bedTime7h').textContent = formatTime(bedTime7hDate);
+            document.getElementById('bedTime6h').textContent = formatTime(bedTime6hDate);
+            document.getElementById('bedTime5h').textContent = formatTime(bedTime5hDate);
+
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            showMessage('คำนวณเสร็จแล้วค่ะ! ขอให้เดินทางโดยสวัสดิภาพนะ 💖', false);
+        }
+    </script>
+
+</body>
+</html>
