@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Plane, Moon, Sun, MapPin, CloudRain, SunMedium, Info, X, Clock } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { Plane, SunMedium, X, Clock, Palette, Check } from 'lucide-react';
+import { useTheme, THEMES } from '../context/ThemeContext';
 
 export default function UberTopBar({ weather }) {
-  const { isDark, toggleTheme } = useTheme();
+  const { activeTheme, themeId, setTheme } = useTheme();
   const [showWeatherModal, setShowWeatherModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   return (
     <>
@@ -37,7 +38,7 @@ export default function UberTopBar({ weather }) {
             </div>
           </div>
 
-          {/* Right Actions: Compact Weather Pill & Theme Switcher */}
+          {/* Right Actions: Compact Weather Pill & 5-Theme Switcher */}
           <div className="flex items-center gap-1.5">
             {weather && (
               <button
@@ -52,23 +53,94 @@ export default function UberTopBar({ weather }) {
               </button>
             )}
 
-            {/* Dark / Light Toggle */}
+            {/* 5-Theme Switcher Button */}
             <button
-              onClick={toggleTheme}
-              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] flex items-center justify-center text-slate-700 dark:text-slate-200 transition active:scale-90 shrink-0"
-              title={isDark ? "สลับเป็น Light Mode" : "สลับเป็น Dark Mode"}
-              aria-label="Toggle Theme"
+              onClick={() => setShowThemeModal(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] text-xs font-bold text-slate-800 dark:text-slate-200 transition active:scale-95 cursor-pointer"
+              title="เลือกธีมของแอพ (5 รูปแบบ)"
+              aria-label="Select Theme"
             >
-              {isDark ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-600" />
-              )}
+              <span>{activeTheme.icon}</span>
+              <span className="hidden sm:inline text-[11px] font-medium">{activeTheme.name}</span>
             </button>
           </div>
 
         </div>
       </header>
+
+      {/* 5-Theme Selection Modal */}
+      {showThemeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in">
+          <div 
+            className="fixed inset-0" 
+            onClick={() => setShowThemeModal(false)}
+          ></div>
+
+          <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#292929] p-5 shadow-2xl z-10 space-y-4 animate-slide-up">
+            
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#222222] pb-3">
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-slate-900 dark:text-white" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  เลือกธีมของแอพ (5 สไตล์)
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowThemeModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 5 Theme Options */}
+            <div className="space-y-2">
+              {THEMES.map((theme) => {
+                const isSelected = theme.id === themeId;
+                return (
+                  <button
+                    key={theme.id}
+                    onClick={() => {
+                      setTheme(theme.id);
+                      setShowThemeModal(false);
+                    }}
+                    className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer text-left ${
+                      isSelected
+                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-[#1f1f1f] shadow-sm'
+                        : 'border-slate-200 dark:border-[#262626] bg-slate-50 dark:bg-[#161616] hover:bg-slate-100 dark:hover:bg-[#1c1c1c]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-white dark:bg-black border border-slate-200 dark:border-[#333333] shadow-xs shrink-0">
+                        {theme.icon}
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                          {theme.name}
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                          {theme.description}
+                        </span>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <Check className="w-4 h-4 text-slate-900 dark:text-white shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setShowThemeModal(false)}
+              className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-bold transition active:scale-95"
+            >
+              ตกลง
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Weather Modal Popup with Detailed Hourly +-3h Breakdown */}
       {showWeatherModal && weather && (

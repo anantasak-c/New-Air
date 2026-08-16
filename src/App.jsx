@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import UberTopBar from './components/UberTopBar';
 import FlightForm from './components/FlightForm';
 import ScheduleResults from './components/ScheduleResults';
 import TarotWidget from './components/TarotWidget';
+import MascotBanner from './components/MascotBanner';
 import { fetchLocationWeather } from './services/weatherService';
 
 function MainContent() {
+  const { activeTheme } = useTheme();
   const [scheduleData, setScheduleData] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
 
-  // Load weather for Sukhumvit 71 on mount or when flight schedule changes
   const updateWeatherForSchedule = (targetDate = null, departureDate = null) => {
     fetchLocationWeather(targetDate, departureDate).then((data) => {
       setWeatherData(data);
@@ -80,7 +81,6 @@ function MainContent() {
     const bedTime6hDate = new Date(wakeupDate.getTime() - 6 * 60 * 60 * 1000);
     const bedTime5hDate = new Date(wakeupDate.getTime() - 5 * 60 * 60 * 1000);
 
-    // Update hourly weather specifically for this flight window (+-3h)
     updateWeatherForSchedule(reportDate, departureDate);
 
     setScheduleData({
@@ -118,14 +118,17 @@ function MainContent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-black text-slate-900 dark:text-white flex flex-col selection:bg-slate-900 selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors">
+    <div className={`min-h-screen ${activeTheme.bgClass} flex flex-col transition-colors duration-300`}>
       
-      {/* Sleek Top Bar with Weather Pill & Theme Toggle */}
+      {/* Top Bar with Weather & 5-Theme Switcher */}
       <UberTopBar weather={weatherData} />
 
       {/* Main Container - Compact 1-Screen Glanceable Layout */}
-      <main className="flex-1 max-w-xl w-full mx-auto px-3.5 py-4 space-y-3.5 pb-12">
+      <main className="flex-1 max-w-xl w-full mx-auto px-3.5 py-3.5 space-y-3 pb-12">
         
+        {/* Mascot Banner (Only shown for cute themes: Bunny, Bear, Cat) */}
+        <MascotBanner />
+
         {/* Form Inputs */}
         <FlightForm 
           onCalculate={handleCalculate} 
@@ -144,7 +147,7 @@ function MainContent() {
         <TarotWidget />
 
         {/* Minimal Footer */}
-        <footer className="pt-6 pb-4 text-center text-[11px] text-slate-400 dark:text-slate-600 space-y-1">
+        <footer className="pt-5 pb-4 text-center text-[11px] opacity-60 space-y-1">
           <p className="font-mono uppercase tracking-wider">
             Flight Duty & Rest Planner • Sukhumvit 71 (Suan Luang)
           </p>
