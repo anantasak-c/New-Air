@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, RotateCw, Eye, Star, X, Sun, Moon, Compass } from 'lucide-react';
+import { Sparkles, RotateCw, Eye, Star, X } from 'lucide-react';
 import { getDailyTarotCard } from '../data/tarotData';
+import { useTheme } from '../context/ThemeContext';
 import confetti from 'canvas-confetti';
 
 export default function TarotWidget() {
+  const { labels, activeTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [card, setCard] = useState(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -25,7 +27,7 @@ export default function TarotWidget() {
         particleCount: 25,
         spread: 60,
         origin: { y: 0.85 },
-        colors: ['#0f172a', '#e2e8f0', '#fbbf24']
+        colors: ['#0f172a', '#e2e8f0', '#fbbf24', '#ec4899']
       });
     }, 300);
   };
@@ -42,18 +44,18 @@ export default function TarotWidget() {
 
   return (
     <>
-      {/* Ultra-Minimal Bottom Luxury Trigger Button */}
+      {/* Dynamic Theme Bottom Trigger Button */}
       <div className="w-full pt-1">
         <button
           onClick={() => setIsOpen(true)}
-          className="w-full py-3 px-4 rounded-xl bg-white dark:bg-[#121212] hover:bg-slate-50 dark:hover:bg-[#181818] border border-slate-200 dark:border-[#222222] text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center justify-between shadow-sm active:scale-98 cursor-pointer"
+          className={`w-full py-3 px-4 rounded-xl ${activeTheme.cardClass} text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center justify-between shadow-sm active:scale-98 cursor-pointer hover:opacity-90`}
         >
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>ดูดวงไพ่ทาโรต์เสริมพลังใจประจำวัน (Daily Flight Tarot)</span>
+            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+            <span className="truncate">{labels?.tarotBtn || 'ดูดวงไพ่ทาโรต์ประจำวัน'}</span>
           </div>
-          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
-            แตะเพื่อเปิดดู
+          <span className="text-[11px] font-medium opacity-60 shrink-0 ml-1">
+            แตะเปิดดู
           </span>
         </button>
       </div>
@@ -73,7 +75,7 @@ export default function TarotWidget() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  ไพ่ทาโรต์เสริมพลังใจประจำวัน
+                  ไพ่ทาโรต์นำทางและเสริมพลังใจ
                 </h3>
               </div>
 
@@ -217,7 +219,7 @@ export default function TarotWidget() {
 
             <button
               onClick={() => setIsOpen(false)}
-              className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-bold transition active:scale-95 mt-2"
+              className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-bold transition active:scale-95 mt-2 cursor-pointer"
             >
               ปิดหน้าต่าง
             </button>

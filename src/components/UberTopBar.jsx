@@ -3,14 +3,14 @@ import { Plane, SunMedium, X, Clock, Palette, Check } from 'lucide-react';
 import { useTheme, THEMES } from '../context/ThemeContext';
 
 export default function UberTopBar({ weather }) {
-  const { activeTheme, themeId, setTheme } = useTheme();
+  const { activeTheme, themeId, setTheme, labels } = useTheme();
   const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
 
   return (
     <>
       <header 
-        className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/90 dark:bg-black/90 border-b border-slate-200 dark:border-[#222222] transition-colors"
+        className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 dark:bg-black/80 border-b border-slate-200/80 dark:border-[#222222] transition-colors"
         style={{
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 6px)',
           paddingBottom: '8px'
@@ -18,7 +18,7 @@ export default function UberTopBar({ weather }) {
       >
         <div className="max-w-xl mx-auto px-4 flex items-center justify-between gap-2">
           
-          {/* Brand & Location */}
+          {/* Brand & Theme Base Label */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
               <Plane className="w-4 h-4" />
@@ -28,12 +28,12 @@ export default function UberTopBar({ weather }) {
                 <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white">
                   FlightRest
                 </span>
-                <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#222222] text-slate-600 dark:text-slate-400">
-                  สุขุมวิท 71
+                <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#222222] text-slate-700 dark:text-slate-300">
+                  {labels?.baseTag || 'BKK'}
                 </span>
               </div>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                สวนหลวง, กทม. 10250
+                {labels?.locationSub || 'Bangkok Base (UTC+7)'}
               </span>
             </div>
           </div>
@@ -43,8 +43,8 @@ export default function UberTopBar({ weather }) {
             {weather && (
               <button
                 onClick={() => setShowWeatherModal(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] text-xs font-semibold text-slate-800 dark:text-slate-200 transition active:scale-95 cursor-pointer"
-                title="แตะเพื่อดูพยากรณ์อากาศรายชั่วโมง (สุขุมวิท 71)"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/80 dark:bg-[#161616] hover:bg-slate-100 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] text-xs font-semibold text-slate-800 dark:text-slate-200 transition active:scale-95 cursor-pointer shadow-xs"
+                title="แตะเพื่อดูพยากรณ์อากาศช่วงเวลาบิน (กรุงเทพฯ)"
               >
                 <SunMedium className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 <span className="tabular-nums">{weather.minTemp}°-{weather.maxTemp}°C</span>
@@ -56,8 +56,8 @@ export default function UberTopBar({ weather }) {
             {/* 5-Theme Switcher Button */}
             <button
               onClick={() => setShowThemeModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] text-xs font-bold text-slate-800 dark:text-slate-200 transition active:scale-95 cursor-pointer"
-              title="เลือกธีมของแอพ (5 รูปแบบ)"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/80 dark:bg-[#161616] hover:bg-slate-100 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] text-xs font-bold text-slate-800 dark:text-slate-200 transition active:scale-95 cursor-pointer shadow-xs"
+              title="เลือกธีมของแอพ (5 สไตล์)"
               aria-label="Select Theme"
             >
               <span>{activeTheme.icon}</span>
@@ -106,7 +106,7 @@ export default function UberTopBar({ weather }) {
                     }}
                     className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer text-left ${
                       isSelected
-                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-[#1f1f1f] shadow-sm'
+                        ? 'border-slate-900 dark:border-white bg-slate-100 dark:bg-[#1f1f1f] shadow-sm font-bold'
                         : 'border-slate-200 dark:border-[#262626] bg-slate-50 dark:bg-[#161616] hover:bg-slate-100 dark:hover:bg-[#1c1c1c]'
                     }`}
                   >
@@ -118,7 +118,7 @@ export default function UberTopBar({ weather }) {
                         <span className="text-xs font-bold text-slate-900 dark:text-white block">
                           {theme.name}
                         </span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-normal">
                           {theme.description}
                         </span>
                       </div>
@@ -158,10 +158,10 @@ export default function UberTopBar({ weather }) {
                 <SunMedium className="w-5 h-5 text-amber-500" />
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    พยากรณ์อากาศพิกัดที่อยู่ของคุณ
+                    {labels?.weatherPopupTitle || 'พยากรณ์อากาศช่วงเวลาเดินทาง (กรุงเทพฯ)'}
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    1269 สุขุมวิท 71, สวนหลวง, กทม. 10250
+                    ฐานการบินกรุงเทพฯ (Bangkok BKK)
                   </p>
                 </div>
               </div>
@@ -203,9 +203,9 @@ export default function UberTopBar({ weather }) {
                       key={idx}
                       className={`shrink-0 w-20 p-2.5 rounded-xl border text-center text-xs space-y-1 ${
                         hourItem.isDeparture
-                          ? 'bg-purple-500/10 border-purple-500/40 text-purple-900 dark:text-purple-300 ring-1 ring-purple-500/30'
+                          ? 'bg-purple-500/10 border-purple-500/40 text-purple-900 dark:text-purple-300 ring-1 ring-purple-500/30 font-bold'
                           : hourItem.isReport
-                            ? 'bg-pink-500/10 border-pink-500/40 text-pink-900 dark:text-pink-300 ring-1 ring-pink-500/30'
+                            ? 'bg-pink-500/10 border-pink-500/40 text-pink-900 dark:text-pink-300 ring-1 ring-pink-500/30 font-bold'
                             : 'bg-slate-50 dark:bg-[#1c1c1c] border-slate-200 dark:border-[#2a2a2a] text-slate-800 dark:text-slate-200'
                       }`}
                     >

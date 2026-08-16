@@ -8,7 +8,7 @@ import MascotBanner from './components/MascotBanner';
 import { fetchLocationWeather } from './services/weatherService';
 
 function MainContent() {
-  const { activeTheme } = useTheme();
+  const { activeTheme, labels } = useTheme();
   const [scheduleData, setScheduleData] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
 
@@ -126,7 +126,7 @@ function MainContent() {
       {/* Main Container - Compact 1-Screen Glanceable Layout */}
       <main className="flex-1 max-w-xl w-full mx-auto px-3.5 py-3.5 space-y-3 pb-12">
         
-        {/* Mascot Banner (Only shown for cute themes: Bunny, Bear, Cat) */}
+        {/* Mascot Banner (Shown for cute themes: Bunny, Bear, Cat) */}
         <MascotBanner />
 
         {/* Form Inputs */}
@@ -149,7 +149,7 @@ function MainContent() {
         {/* Minimal Footer */}
         <footer className="pt-5 pb-4 text-center text-[11px] opacity-60 space-y-1">
           <p className="font-mono uppercase tracking-wider">
-            Flight Duty & Rest Planner • Sukhumvit 71 (Suan Luang)
+            {labels?.footerText || 'Flight Duty & Rest Planner • Bangkok (BKK)'}
           </p>
         </footer>
 
