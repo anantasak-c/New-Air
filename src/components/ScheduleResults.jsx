@@ -11,10 +11,7 @@ import {
   Clock, 
   ArrowRight,
   ChevronDown,
-  ChevronUp,
-  CloudRain,
-  SunMedium,
-  MapPin
+  ChevronUp
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import LiveCountdown from './LiveCountdown';
@@ -108,7 +105,7 @@ ${weatherSummary}
   };
 
   return (
-    <div className="w-full space-y-3 animate-slide-up">
+    <div className="w-full space-y-2.5 animate-slide-up">
       
       {/* Live Countdown Status */}
       <LiveCountdown wakeupDate={wakeupDate} departureDate={departureDate} />
@@ -136,7 +133,7 @@ ${weatherSummary}
 
           <button
             onClick={handleCopyBriefing}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
           >
             {copied ? (
               <>
@@ -186,61 +183,9 @@ ${weatherSummary}
 
       </div>
 
-      {/* 3. Flight Window Weather Forecast (±3 Hours around flight from Sukhumvit 71) */}
-      {weather?.hourlyWindow && weather.hourlyWindow.length > 0 && (
-        <div className="w-full rounded-2xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#222222] p-4 shadow-sm transition-colors space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
-              <SunMedium className="w-3.5 h-3.5 text-amber-500" />
-              <span>พยากรณ์อากาศช่วงเดินทาง (สุขุมวิท 71 ➔ สนามบิน ±3 ชม.)</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-mono">10250</span>
-          </div>
-
-          {/* Hourly Visual Scroll Strip */}
-          <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5">
-            {weather.hourlyWindow.map((item, idx) => (
-              <div
-                key={idx}
-                className={`shrink-0 w-20 p-2 rounded-xl border text-center text-xs space-y-0.5 ${
-                  item.isDeparture
-                    ? 'bg-purple-500/10 border-purple-500/40 text-purple-900 dark:text-purple-300 font-bold'
-                    : item.isReport
-                      ? 'bg-pink-500/10 border-pink-500/40 text-pink-900 dark:text-pink-300 font-bold'
-                      : 'bg-slate-50 dark:bg-[#181818] border-slate-200 dark:border-[#262626] text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <span className="text-[10px] font-bold block tabular-nums">
-                  {item.hourLabel}
-                </span>
-                <span className="text-[9px] block opacity-75">
-                  {item.isDeparture ? 'ออกบ้าน' : item.isReport ? 'เริ่มงาน' : '—'}
-                </span>
-                <span className="text-xs block">
-                  {item.isRain ? '🌧️' : '☀️'}
-                </span>
-                <span className="text-[11px] font-bold block tabular-nums">
-                  {item.temp}°C
-                </span>
-                <span className={`text-[10px] font-semibold block tabular-nums ${
-                  item.rainProb >= 40 ? 'text-rose-500' : 'text-sky-500'
-                }`}>
-                  ฝน {item.rainProb}%
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Smart Advisory note */}
-          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-[#181818] p-2.5 rounded-xl border border-slate-100 dark:border-[#222222]">
-            💡 <strong>สรุปสภาพอากาศ:</strong> {weather.windowSummary}
-          </p>
-        </div>
-      )}
-
-      {/* 4. Bedtime 4-Box Matrix */}
+      {/* 3. Bedtime 4-Box Matrix */}
       <div className="w-full rounded-2xl bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#222222] p-4 shadow-sm transition-colors">
-        <div className="flex items-center gap-1.5 mb-3 text-slate-900 dark:text-white text-xs font-bold">
+        <div className="flex items-center gap-1.5 mb-2.5 text-slate-900 dark:text-white text-xs font-bold">
           <Moon className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
           <span>เวลาเข้านอนแนะนำ (คืนก่อนไฟลท์)</span>
         </div>
@@ -288,7 +233,7 @@ ${weatherSummary}
         </div>
       </div>
 
-      {/* 5. Sleep Calculator Inline Toggle */}
+      {/* 4. Sleep Calculator Inline Toggle */}
       <div className="w-full rounded-xl bg-slate-100 dark:bg-[#141414] border border-slate-200 dark:border-[#222222] p-3 transition-colors">
         <button
           type="button"
@@ -314,7 +259,7 @@ ${weatherSummary}
               <button
                 type="button"
                 onClick={handleCalculateCustomSleep}
-                className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-lg text-xs font-bold transition active:scale-95"
+                className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-lg text-xs font-bold transition active:scale-95 cursor-pointer"
               >
                 คำนวณ
               </button>

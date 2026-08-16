@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plane, Moon, Sun, MapPin, CloudRain, SunMedium, Info, X, Clock, Umbrella } from 'lucide-react';
+import { Plane, Moon, Sun, MapPin, CloudRain, SunMedium, Info, X, Clock } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 export default function UberTopBar({ weather }) {
@@ -8,12 +8,18 @@ export default function UberTopBar({ weather }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/85 dark:bg-black/85 border-b border-slate-200 dark:border-[#222222] transition-colors">
-        <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+      <header 
+        className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/90 dark:bg-black/90 border-b border-slate-200 dark:border-[#222222] transition-colors"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 6px)',
+          paddingBottom: '8px'
+        }}
+      >
+        <div className="max-w-xl mx-auto px-4 flex items-center justify-between gap-2">
           
-          {/* Brand & Precise Location */}
+          {/* Brand & Location */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-sm shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
               <Plane className="w-4 h-4" />
             </div>
             <div>
@@ -26,20 +32,20 @@ export default function UberTopBar({ weather }) {
                 </span>
               </div>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                สวนหลวง, กรุงเทพฯ 10250
+                สวนหลวง, กทม. 10250
               </span>
             </div>
           </div>
 
           {/* Right Actions: Compact Weather Pill & Theme Switcher */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {weather && (
               <button
                 onClick={() => setShowWeatherModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] text-xs font-semibold text-slate-800 dark:text-slate-200 transition active:scale-95 cursor-pointer"
-                title="ดูพยากรณ์อากาศ สุขุมวิท 71 รายชั่วโมง"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] text-xs font-semibold text-slate-800 dark:text-slate-200 transition active:scale-95 cursor-pointer"
+                title="แตะเพื่อดูพยากรณ์อากาศรายชั่วโมง (สุขุมวิท 71)"
               >
-                <SunMedium className="w-3.5 h-3.5 text-amber-500" />
+                <SunMedium className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 <span className="tabular-nums">{weather.minTemp}°-{weather.maxTemp}°C</span>
                 <span className="text-slate-300 dark:text-slate-600">•</span>
                 <span className="text-sky-600 dark:text-sky-400 font-bold">ฝน {weather.rainProb}%</span>
@@ -49,7 +55,7 @@ export default function UberTopBar({ weather }) {
             {/* Dark / Light Toggle */}
             <button
               onClick={toggleTheme}
-              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] flex items-center justify-center text-slate-700 dark:text-slate-200 transition active:scale-90"
+              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#161616] hover:bg-slate-200 dark:hover:bg-[#222222] border border-slate-200 dark:border-[#2a2a2a] flex items-center justify-center text-slate-700 dark:text-slate-200 transition active:scale-90 shrink-0"
               title={isDark ? "สลับเป็น Light Mode" : "สลับเป็น Dark Mode"}
               aria-label="Toggle Theme"
             >
@@ -64,9 +70,9 @@ export default function UberTopBar({ weather }) {
         </div>
       </header>
 
-      {/* Weather Modal Popup with Hourly +-3h Breakdown */}
+      {/* Weather Modal Popup with Detailed Hourly +-3h Breakdown */}
       {showWeatherModal && weather && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in">
           <div 
             className="fixed inset-0" 
             onClick={() => setShowWeatherModal(false)}
@@ -98,7 +104,7 @@ export default function UberTopBar({ weather }) {
             {/* General Conditions */}
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1c1c1c] border border-slate-100 dark:border-[#262626]">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">อุณหภูมิทั่วไป:</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">อุณหภูมิ:</span>
                 <span className="text-base font-bold text-slate-900 dark:text-white tabular-nums">
                   {weather.minTemp}°C - {weather.maxTemp}°C
                 </span>
@@ -134,8 +140,8 @@ export default function UberTopBar({ weather }) {
                       <span className="text-[11px] font-bold block tabular-nums">
                         {hourItem.hourLabel}
                       </span>
-                      <span className="text-[10px] block opacity-80">
-                        {hourItem.isDeparture ? 'ออกบ้าน' : hourItem.isReport ? 'เริ่มงาน' : ''}
+                      <span className="text-[10px] block opacity-80 font-medium">
+                        {hourItem.isDeparture ? 'ออกบ้าน' : hourItem.isReport ? 'เริ่มงาน' : '—'}
                       </span>
                       <span className="text-sm block">
                         {hourItem.isRain ? '🌧️' : '☀️'}

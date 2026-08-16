@@ -38,6 +38,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* iOS Safe Area Padding Utilities */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 10px);
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+
 /* 3D Card Flip Styles for Tarot */
 .perspective-1000 {
   perspective: 1000px;
