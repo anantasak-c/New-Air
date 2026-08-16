@@ -7,9 +7,7 @@ import {
   Copy, 
   Check, 
   BedDouble, 
-  Sparkles, 
-  Clock, 
-  ArrowRight,
+  Share2,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -40,37 +38,39 @@ export default function ScheduleResults({ data, weather }) {
     formatDateShort,
   } = data;
 
-  const handleCopyBriefing = () => {
-    const weatherSummary = weather?.windowSummary 
-      ? `สภาพอากาศช่วงเดินทาง: ${weather.windowSummary}`
-      : weather?.label 
-        ? `สภาพอากาศ กทม. พรุ่งนี้: ${weather.label} ${weather.minTemp}-${weather.maxTemp}°C (ฝน ${weather.rainProb}%)`
-        : `สภาพอากาศ: โปรดตรวจสอบก่อนออกเดินทาง`;
-
-    const text = `FLIGHT & REST SCHEDULE BRIEFING
-━━━━━━━━━━━━━━━━━━━━
-เริ่มงาน / ติ๊กต็อก: ${formatTime(reportDate)} (${formatDateShort(reportDate)})
-เวลาตื่นนอนแนะนำ: ${formatTime(wakeupDate)}
-เวลาแต่งตัว: ${prepTimeFormatted}
-เวลาออกจากบ้าน: ${formatTime(departureDate)} (เดินทาง ${travelTimeFormatted})
-ถึงหน้างาน: ${formatTime(reportDate)}
-${weatherSummary}
-━━━━━━━━━━━━━━━━━━━━
-ตารางเวลานอนแนะนำ (คืนก่อนหน้า):
+  // Clean, well-structured briefing message with "รักน้องเอ็มสุดหล่อ" at the bottom
+  const getCleanBriefingText = () => {
+    return `✈️ FLIGHT & REST SCHEDULE
+🗓️ ${formatDateShort(reportDate)}
+━━━━━━━━━━━━━━
+☀️ ตื่นนอน: ${formatTime(wakeupDate)} (แต่งตัว ${prepTimeFormatted})
+🚗 ออกจากบ้าน: ${formatTime(departureDate)} (เดินทาง ${travelTimeFormatted})
+✈️ เริ่มงาน: ${formatTime(reportDate)}
+━━━━━━━━━━━━━━
+🌙 เวลานอนแนะนำ (คืนก่อนหน้า):
 • 8 ชม. (เต็มอิ่ม): ${formatTime(bedTime8hDate)}
 • 7 ชม. (สบาย): ${formatTime(bedTime7hDate)}
 • 6 ชม. (มาตรฐาน): ${formatTime(bedTime6hDate)}
 • 5 ชม. (ขั้นต่ำ): ${formatTime(bedTime5hDate)}
-━━━━━━━━━━━━━━━━━━━━
-${labels?.footerText || 'ขอให้การเดินทางราบรื่น ปลอดภัย และตรงต่อเวลาเสมอ'}`;
+━━━━━━━━━━━━━━
+รักน้องเอ็มสุดหล่อ`;
+  };
 
+  const handleShareLine = () => {
+    const text = getCleanBriefingText();
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+    window.open(lineUrl, '_blank');
+  };
+
+  const handleCopyBriefing = () => {
+    const text = getCleanBriefingText();
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       confetti({
         particleCount: 25,
         spread: 60,
         origin: { y: 0.85 },
-        colors: ['#0f172a', '#276ef1', '#ec4899', '#f59e0b']
+        colors: ['#06c755', '#0f172a', '#276ef1', '#ec4899']
       });
       setTimeout(() => setCopied(false), 2500);
     });
@@ -121,11 +121,11 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
       <LiveCountdown wakeupDate={wakeupDate} departureDate={departureDate} />
 
       {/* 1. Hero Wake-up Target Card */}
-      <div className={`w-full rounded-2xl ${activeTheme.cardClass} border-2 border-slate-900/10 dark:border-white/20 p-4 sm:p-5 transition-colors`}>
+      <div className={`w-full rounded-2xl ${activeTheme.cardClass} border-2 border-slate-900/10 dark:border-white/20 p-4 sm:p-5 transition-colors shadow-sm`}>
         <div className="flex items-center justify-between gap-2 mb-1">
           <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
             <Sun className="w-4 h-4 text-amber-500" />
-            {labels?.wakeupTitle || 'เวลาตื่นนอนที่แนะนำ:'} ({wakeupSubText})
+            {labels?.wakeupTitle || 'เวลาตื่นนอนที่แนะนำ:'}
           </span>
           <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 tabular-nums">
             {formatDateShort(wakeupDate)}
@@ -136,32 +136,53 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
           {formatTime(wakeupDate)}
         </div>
 
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+          {wakeupSubText}
+        </p>
+
+        {/* Action Buttons Row: LINE Share + Quick Copy */}
         <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-[#222222] flex items-center justify-between flex-wrap gap-2">
           <span className="text-xs text-slate-600 dark:text-slate-400">
-            เวลาเริ่มงาน: <strong className="text-slate-900 dark:text-white">{formatTime(reportDate)}</strong>
+            เริ่มงาน: <strong className="text-slate-900 dark:text-white">{formatTime(reportDate)}</strong>
           </span>
 
-          <button
-            onClick={handleCopyBriefing}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                <span>{labels?.quickCopySuccess || 'คัดลอกเรียบร้อยแล้ว'}</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>{labels?.quickCopyBtn || 'Quick Copy สรุปส่งแชท'}</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-1.5">
+            {/* Share to LINE Button */}
+            <button
+              onClick={handleShareLine}
+              className="flex items-center gap-1 px-3 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
+              title="แชร์ตารางเวลาเข้า LINE"
+            >
+              {/* LINE Icon SVG */}
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.578.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.962z"/>
+              </svg>
+              <span>แชร์ไป Line</span>
+            </button>
+
+            {/* Quick Copy Button */}
+            <button
+              onClick={handleCopyBriefing}
+              className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                  <span>คัดลอกแล้ว</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>คัดลอก</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 2. Departure & Arrival Twin Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2">
         
         {/* Departure Time */}
         <div className="p-3.5 rounded-xl bg-purple-50/80 dark:bg-[#181818] border border-purple-200/80 dark:border-[#262626] transition-colors">
@@ -172,7 +193,7 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
           <div className="text-2xl font-black text-purple-950 dark:text-white tabular-nums">
             {formatTime(departureDate)}
           </div>
-          <span className="text-[11px] text-purple-700 dark:text-slate-400 block mt-0.5 font-medium">
+          <span className="text-[10px] text-purple-700 dark:text-slate-400 block mt-0.5 font-medium truncate">
             {departureSubText}
           </span>
         </div>
@@ -181,12 +202,12 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
         <div className="p-3.5 rounded-xl bg-pink-50/80 dark:bg-[#181818] border border-pink-200/80 dark:border-[#262626] transition-colors">
           <div className="flex items-center gap-1.5 text-pink-900 dark:text-pink-300 text-xs font-bold mb-0.5">
             <Plane className="w-3.5 h-3.5" />
-            <span>{labels?.arrivalTitle || 'เวลาถึงจุดหมาย / หน้างาน'}</span>
+            <span>{labels?.arrivalTitle || 'เวลาถึงจุดหมาย'}</span>
           </div>
           <div className="text-2xl font-black text-pink-950 dark:text-white tabular-nums">
             {formatTime(reportDate)}
           </div>
-          <span className="text-[11px] text-pink-700 dark:text-slate-400 block mt-0.5 font-medium">
+          <span className="text-[10px] text-pink-700 dark:text-slate-400 block mt-0.5 font-medium truncate">
             {labels?.arrivalSub || 'พร้อมเริ่มงานตรงเวลา'}
           </span>
         </div>
@@ -194,7 +215,7 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
       </div>
 
       {/* 3. Bedtime 4-Box Matrix */}
-      <div className={`w-full rounded-2xl ${activeTheme.cardClass} p-4 transition-colors`}>
+      <div className={`w-full rounded-2xl ${activeTheme.cardClass} p-4 transition-colors shadow-sm`}>
         <div className="flex items-center gap-1.5 mb-2.5 text-slate-900 dark:text-white text-xs font-bold">
           <Moon className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
           <span>{labels?.bedtimeTitle || 'เวลาเข้านอนแนะนำ (คืนก่อนไฟลท์)'}</span>
@@ -204,7 +225,7 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
           {/* 8 Hours */}
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-[#16221a] border border-emerald-200 dark:border-emerald-900/40">
             <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 block truncate">
-              {labels?.bedtime8hTag || 'นอนเต็มอิ่ม 8 ชม.'}
+              {labels?.bedtime8hTag || '8 ชม. (เต็มอิ่ม)'}
             </span>
             <div className="text-xl font-black text-emerald-950 dark:text-emerald-100 tabular-nums mt-0.5">
               {formatTime(bedTime8hDate)}
@@ -214,7 +235,7 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
           {/* 7 Hours */}
           <div className="p-3 rounded-xl bg-lime-50 dark:bg-[#1a2316] border border-lime-200 dark:border-lime-900/40">
             <span className="text-[11px] font-bold text-lime-800 dark:text-lime-300 block truncate">
-              {labels?.bedtime7hTag || 'นอนสบาย 7 ชม.'}
+              {labels?.bedtime7hTag || '7 ชม. (สบาย)'}
             </span>
             <div className="text-xl font-black text-lime-950 dark:text-lime-100 tabular-nums mt-0.5">
               {formatTime(bedTime7hDate)}
@@ -224,7 +245,7 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
           {/* 6 Hours */}
           <div className="p-3 rounded-xl bg-amber-50 dark:bg-[#241f14] border border-amber-200 dark:border-amber-900/40">
             <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 block truncate">
-              {labels?.bedtime6hTag || 'นอน 6 ชม.'}
+              {labels?.bedtime6hTag || '6 ชม. (มาตรฐาน)'}
             </span>
             <div className="text-xl font-black text-amber-950 dark:text-amber-100 tabular-nums mt-0.5">
               {formatTime(bedTime6hDate)}
@@ -234,7 +255,7 @@ ${labels?.footerText || 'ขอให้การเดินทางราบ�
           {/* 5 Hours */}
           <div className="p-3 rounded-xl bg-rose-50 dark:bg-[#241618] border border-rose-200 dark:border-rose-900/40">
             <span className="text-[11px] font-bold text-rose-800 dark:text-rose-300 block truncate">
-              {labels?.bedtime5hTag || 'นอน 5 ชม. (ขั้นต่ำ)'}
+              {labels?.bedtime5hTag || '5 ชม. (ขั้นต่ำ)'}
             </span>
             <div className="text-xl font-black text-rose-950 dark:text-rose-100 tabular-nums mt-0.5">
               {formatTime(bedTime5hDate)}
