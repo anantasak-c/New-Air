@@ -204,7 +204,7 @@ export function buildFlightFlexCard(flight, dressUpMinutes = 90, transitMinutes 
               text: `(แต่งตัว ${dressUpMinutes} นาที + เดินทาง ${transitMinutes} นาที)`,
               size: "xxs",
               color: "#6b7280",
-              margin: "xxs"
+              margin: "xs"
             }
           ]
         },

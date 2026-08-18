@@ -149,13 +149,12 @@ export default function LiffSchedulePicker() {
 
       if (liff.isInClient()) {
         await liff.sendMessages([flexMessage]);
-        setSentSuccess(true);
-        setTimeout(() => {
-          liff.closeWindow();
-        }, 800);
-      } else {
-        setSentSuccess(true);
       }
+      
+      setSentSuccess(true);
+      setTimeout(() => {
+        setSentSuccess(false);
+      }, 3000);
     } catch (err) {
       console.error('Failed to send LIFF message:', err);
       alert(`เกิดข้อผิดพลาดในการส่งข้อความ: ${err.message}`);
@@ -427,7 +426,7 @@ export default function LiffSchedulePicker() {
       </main>
 
       {/* Floating Bottom Action Button (Apple Green / LINE Emerald) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/80 p-3 pb-safe max-w-md mx-auto shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/80 p-3 pb-safe max-w-md mx-auto shadow-lg space-y-1.5">
         <button
           type="button"
           disabled={sending || selectedIndices.size === 0}
@@ -446,7 +445,7 @@ export default function LiffSchedulePicker() {
           ) : sentSuccess ? (
             <span className="flex items-center gap-2 text-white font-bold">
               <CheckCircle2 className="w-4 h-4" />
-              ส่งเรียบร้อยแล้ว! กำลังปิดหน้าต่าง...
+              ส่งเข้าแชท LINE แล้ว! (แตะเพื่อส่งอีกครั้งได้)
             </span>
           ) : (
             <>
@@ -455,6 +454,18 @@ export default function LiffSchedulePicker() {
             </>
           )}
         </button>
+
+        {isInLine && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => liff.closeWindow()}
+              className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 active:scale-95 py-0.5"
+            >
+              ✕ ปิดหน้าต่างนี้
+            </button>
+          </div>
+        )}
       </div>
 
     </div>
