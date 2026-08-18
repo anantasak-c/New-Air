@@ -8,7 +8,7 @@ const ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 
 function verifySignature(bodyStr, signature) {
   if (!CHANNEL_SECRET) return true;
-  if (!signature) return true; // lenient fallback for serverless JSON body
+  if (!signature) return true;
   try {
     const hash = crypto
       .createHmac('sha256', CHANNEL_SECRET)
@@ -16,7 +16,6 @@ function verifySignature(bodyStr, signature) {
       .digest('base64');
     return hash === signature;
   } catch (e) {
-    console.warn('Signature check warning:', e.message);
     return true;
   }
 }
@@ -80,6 +79,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ 
       status: 'ok', 
       message: 'Flight Rest Planner LINE Webhook is active ✈️',
+      model: 'Gemini 2.0 Flash',
       hasChannelSecret: !!CHANNEL_SECRET,
       hasAccessToken: !!ACCESS_TOKEN,
       hasGeminiKey: !!process.env.GEMINI_API_KEY
@@ -131,6 +131,17 @@ export default async function handler(req, res) {
         }
 
         const flights = ocrResult.data.flights;
+        
+        // Check if all flights are Rest / Day Off
+        const hasActiveFlight = flights.some(f => f.dutyType === 'flight' || (f.reportTime && f.dutyType !== 'rest' && f.dutyType !== 'leave'));
+
+        if (!hasActiveFlight) {
+          // Send Day Off Flex Card directly
+          const flexMessage = buildRosterFlexCarousel(flights, 2.5);
+          await replyLineMessage(replyToken, flexMessage);
+          continue;
+        }
+
         const encodedData = Buffer.from(JSON.stringify(flights)).toString('base64');
 
         // Quick Reply for total prep + transit hours
@@ -145,7 +156,7 @@ export default async function handler(req, res) {
                   type: 'postback',
                   label: '2.0 ชม.',
                   data: `action=calc&prep=2.0&data=${encodedData}`,
-                  displayText: '2.0 ชม. (เตรียมตัว 1h + เดินทาง 1h)',
+                  displayText: '2.0 ชม. (แต่งตัว 1h + เดินทาง 1h)',
                 },
               },
               {
@@ -154,7 +165,7 @@ export default async function handler(req, res) {
                   type: 'postback',
                   label: '2.5 ชม. (แนะนำ)',
                   data: `action=calc&prep=2.5&data=${encodedData}`,
-                  displayText: '2.5 ชม. (เตรียมตัว 1.5h + เดินทาง 1h)',
+                  displayText: '2.5 ชม. (แต่งตัว 1.5h + เดินทาง 1h)',
                 },
               },
               {
@@ -163,7 +174,7 @@ export default async function handler(req, res) {
                   type: 'postback',
                   label: '3.0 ชม.',
                   data: `action=calc&prep=3.0&data=${encodedData}`,
-                  displayText: '3.0 ชม. (เตรียมตัว 2h + เดินทาง 1h)',
+                  displayText: '3.0 ชม. (แต่งตัว 2h + เดินทาง 1h)',
                 },
               },
               {
@@ -172,7 +183,7 @@ export default async function handler(req, res) {
                   type: 'postback',
                   label: '3.5 ชม.',
                   data: `action=calc&prep=3.5&data=${encodedData}`,
-                  displayText: '3.5 ชม. (เตรียมตัว 2h + เดินทาง 1.5h)',
+                  displayText: '3.5 ชม. (แต่งตัว 2h + เดินทาง 1.5h)',
                 },
               },
             ],
