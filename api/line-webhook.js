@@ -55,7 +55,7 @@ async function replyLineMessage(replyToken, messages) {
 
 async function getLineImageBuffer(messageId) {
   if (!ACCESS_TOKEN) {
-    throw new Error('Missing LINE_CHANNEL_ACCESS_TOKEN');
+    throw new Error('Missing LINE_CHANNEL_ACCESS_TOKEN in environment');
   }
 
   const url = `https://api-data.line.me/v2/bot/message/${messageId}/content`;
@@ -67,7 +67,7 @@ async function getLineImageBuffer(messageId) {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Failed to download LINE image: ${res.status} ${err}`);
+    throw new Error(`LINE Image API ${res.status}: ${err}`);
   }
 
   const arrayBuffer = await res.arrayBuffer();
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ 
       status: 'ok', 
       message: 'Flight Rest Planner LINE Webhook is active ✈️',
-      model: 'Gemini 2.0 Flash',
+      model: 'Gemini 2.0 Flash / 1.5 Flash',
       hasChannelSecret: !!CHANNEL_SECRET,
       hasAccessToken: !!ACCESS_TOKEN,
       hasGeminiKey: !!process.env.GEMINI_API_KEY
@@ -107,10 +107,33 @@ export default async function handler(req, res) {
           const imageBuffer = await getLineImageBuffer(event.message.id);
           ocrResult = await scanRosterWithGemini(imageBuffer);
         } catch (imgErr) {
-          console.error('Image download or OCR failed:', imgErr);
+          console.error('Image fetch error:', imgErr);
+          ocrResult = { success: false, error: imgErr.message };
         }
 
-        if (!ocrResult?.success || !ocrResult?.data?.hasRoster || !ocrResult?.data?.flights?.length) {
+        // If technical error occurred during AI OCR
+        if (!ocrResult?.success) {
+          await replyLineMessage(replyToken, {
+            type: 'text',
+            text: `⚠️ ระบบ AI ขัดข้องชั่วคราว (${ocrResult?.error || 'ไม่สามารถติดต่อ AI ได้'})\n\nกรุณาลองส่งใหม่อีกครั้ง หรือเปิดคำนวณผ่านหน้าเว็บด้านล่างนี้ได้ครับ ✈️`,
+            quickReply: {
+              items: [
+                {
+                  type: 'action',
+                  action: {
+                    type: 'uri',
+                    label: '📱 เปิดหน้าเว็บคำนวณ',
+                    uri: 'https://new-air-phi.vercel.app',
+                  },
+                },
+              ],
+            },
+          });
+          continue;
+        }
+
+        // If no flights or duties found in image
+        if (!ocrResult?.data?.hasRoster || !ocrResult?.data?.flights?.length) {
           await replyLineMessage(replyToken, {
             type: 'text',
             text: '⚠️ ไม่พบข้อมูลตารางบินในรูปนี้ครับ\n\nโปรดแคปหน้าจอ Roster (เช่น หน้ารายการไฟลท์ หรือหน้ารายละเอียดวัน) ให้เห็นตัวหนังสือชัดเจน แล้วส่งใหม่อีกครั้งนะครับ ✈️',
