@@ -17,6 +17,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { buildRosterFlexCarousel } from '../utils/flexBuilder';
+import { decompressFlights } from '../utils/flightCodec';
 
 export default function LiffSchedulePicker() {
   const [liffInitialized, setLiffInitialized] = useState(false);
@@ -42,7 +43,7 @@ export default function LiffSchedulePicker() {
       const searchParams = new URLSearchParams(window.location.search);
       const dataParam = searchParams.get('d');
       if (dataParam) {
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(dataParam))));
+        const decoded = decompressFlights(dataParam);
         if (Array.isArray(decoded) && decoded.length > 0) {
           setFlights(decoded);
 

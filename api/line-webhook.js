@@ -163,15 +163,22 @@ export default async function handler(req, res) {
         const flights = ocrResult.data.flights;
         console.log(`Building LIFF invitation card for ${flights.length} flights...`);
 
-        // Encode flights to base64
-        const flightsJson = JSON.stringify(flights);
-        const encodedData = Buffer.from(unescape(encodeURIComponent(flightsJson))).toString('base64');
+        // Compress flights to compact tuple format: [date, pairing, reportTime, typeChar]
+        const compact = flights.map(f => [
+          f.date || '',
+          (f.pairing || '').replace(/:\s*BKKBKK/g, ''),
+          f.reportTime || '',
+          f.dutyType ? f.dutyType[0] : 'f'
+        ]);
+        const compactJson = JSON.stringify(compact);
+        const encodedData = Buffer.from(unescape(encodeURIComponent(compactJson))).toString('base64');
 
-        // Construct LIFF URL
+        // Construct LIFF URL (Always under 600-700 characters, well below LINE's 1,000 char limit)
         const liffUrl = LIFF_ID 
           ? `https://liff.line.me/${LIFF_ID}?d=${encodedData}`
           : `https://new-air-phi.vercel.app/liff?d=${encodedData}`;
 
+        console.log('LIFF URL Length:', liffUrl.length);
         const invitationCard = buildLiffInvitationCard(flights, liffUrl);
         await replyLineMessage(replyToken, invitationCard);
         continue;
