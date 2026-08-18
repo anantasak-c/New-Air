@@ -51,13 +51,12 @@ If the image contains NO airline schedule text at all (e.g. a selfie, random sce
   "flights": []
 }`;
 
-  // Current Google Gemini models active on this API Key
+  // Prioritize verified fast model: gemini-2.5-flash-lite (sub-second vision OCR)
   const modelCandidates = [
-    'gemini-2.5-flash',
-    'gemini-flash-latest',
-    'gemini-3.7-flash',
     'gemini-2.5-flash-lite',
-    'gemini-pro-latest'
+    'gemini-flash-latest',
+    'gemini-2.5-flash',
+    'gemini-3.7-flash',
   ];
 
   let lastError = null;
