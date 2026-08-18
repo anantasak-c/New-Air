@@ -9,7 +9,8 @@ export const config = {
 
 const CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 const ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-const LIFF_ID = process.env.LINE_LIFF_ID || process.env.VITE_LIFF_ID;
+const LIFF_ID = process.env.LINE_LIFF_ID || process.env.VITE_LIFF_ID || '2011161687-ldzW1DVD';
+
 
 function verifySignature(bodyStr, signature) {
   if (!CHANNEL_SECRET) return true;

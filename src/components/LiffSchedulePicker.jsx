@@ -67,7 +67,7 @@ export default function LiffSchedulePicker() {
     }
 
     // Initialize LINE LIFF
-    const liffId = import.meta.env.VITE_LIFF_ID || window.__LIFF_ID__;
+    const liffId = import.meta.env.VITE_LIFF_ID || window.__LIFF_ID__ || '2011161687-ldzW1DVD';
     if (liffId) {
       liff
         .init({ liffId })
