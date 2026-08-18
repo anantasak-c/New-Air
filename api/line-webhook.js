@@ -3,7 +3,12 @@ import crypto from 'crypto';
 import { scanRosterWithGemini } from './lib/geminiVision.js';
 import { buildRosterFlexCarousel } from './lib/flexMessageBuilder.js';
 
+export const config = {
+  maxDuration: 60,
+};
+
 const CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
+
 const ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 
 function verifySignature(bodyStr, signature) {
