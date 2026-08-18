@@ -1,7 +1,7 @@
 // LINE Messaging API Webhook Handler (Vercel Serverless Function)
 import crypto from 'crypto';
 import { scanRosterWithGemini } from './lib/geminiVision.js';
-import { buildRosterFlexCarousel } from './lib/flexMessageBuilder.js';
+import { buildLiffInvitationCard } from './lib/flexMessageBuilder.js';
 
 export const config = {
   maxDuration: 60,
@@ -9,6 +9,7 @@ export const config = {
 
 const CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
 const ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+const LIFF_ID = process.env.LINE_LIFF_ID || process.env.VITE_LIFF_ID;
 
 function verifySignature(bodyStr, signature) {
   if (!CHANNEL_SECRET) return true;
@@ -82,11 +83,12 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     return res.status(200).json({ 
       status: 'ok', 
-      message: 'Flight Rest Planner LINE Webhook is active ✈️',
+      message: 'Flight Rest Planner LINE Webhook with LIFF is active ✈️',
       model: 'Gemini 2.5 Flash Lite',
       hasChannelSecret: !!CHANNEL_SECRET,
       hasAccessToken: !!ACCESS_TOKEN,
-      hasGeminiKey: !!process.env.GEMINI_API_KEY
+      hasGeminiKey: !!process.env.GEMINI_API_KEY,
+      hasLiffId: !!LIFF_ID
     });
   }
 
@@ -158,11 +160,19 @@ export default async function handler(req, res) {
         }
 
         const flights = ocrResult.data.flights;
-        console.log(`Sending Flex Carousel with ${flights.length} duty cards...`);
+        console.log(`Building LIFF invitation card for ${flights.length} flights...`);
 
-        // Instant 1-Click calculation: standard prep 2.5 hrs (แต่งตัว 1.5h + เดินทาง 1h)
-        const flexMessage = buildRosterFlexCarousel(flights, 2.5);
-        await replyLineMessage(replyToken, flexMessage);
+        // Encode flights to base64
+        const flightsJson = JSON.stringify(flights);
+        const encodedData = Buffer.from(unescape(encodeURIComponent(flightsJson))).toString('base64');
+
+        // Construct LIFF URL
+        const liffUrl = LIFF_ID 
+          ? `https://liff.line.me/${LIFF_ID}?d=${encodedData}`
+          : `https://new-air-phi.vercel.app/liff?d=${encodedData}`;
+
+        const invitationCard = buildLiffInvitationCard(flights, liffUrl);
+        await replyLineMessage(replyToken, invitationCard);
         continue;
       }
 
@@ -171,7 +181,7 @@ export default async function handler(req, res) {
         console.log('Processing incoming text message:', event.message.text);
         await replyLineMessage(replyToken, {
           type: 'text',
-          text: '✈️ ยินดีต้อนรับสู่ Flight Duty & Rest Planner!\n\n📸 เพียงแคปหน้าจอ Roster (ตารางบิน) แล้วส่งรูปเข้ามาในแชทนี้ได้เลยครับ\n\nAI จะสแกนเวลาเริ่มงานและสรุปเวลาตื่นนอนพร้อมตารางพักผ่อนให้ทันทีครับ 🛌✨',
+          text: '✈️ ยินดีต้อนรับสู่ Flight Duty & Rest Planner!\n\n📸 เพียงแคปหน้าจอ Roster (ตารางบิน) แล้วส่งรูปเข้ามาในแชทนี้ได้เลยครับ\n\nAI จะสแกนตารางบินและเปิดหน้าต่าง LIFF ให้คุณปรับเวลาแต่งตัว/เดินทาง และเลือกวันได้ตามใจชอบครับ 🛌✨',
           quickReply: {
             items: [
               {

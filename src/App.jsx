@@ -159,10 +159,23 @@ function MainContent() {
   );
 }
 
+import LiffSchedulePicker from './components/LiffSchedulePicker';
+
 export default function App() {
+  const isLiffView = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/liff') || 
+    window.location.search.includes('d=') ||
+    window.location.search.includes('liff.state')
+  );
+
+  if (isLiffView) {
+    return <LiffSchedulePicker />;
+  }
+
   return (
     <ThemeProvider>
       <MainContent />
     </ThemeProvider>
   );
 }
+
