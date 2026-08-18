@@ -1,10 +1,10 @@
-// Gemini 2.0 Flash Vision OCR Service for Airline Roster Screenshots
+// Robust Multi-model Gemini Vision OCR Service for Airline Roster Screenshots
 
 export async function scanRosterWithGemini(imageBuffer, mimeType = 'image/jpeg') {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error('Missing GEMINI_API_KEY environment variable');
-    return { success: false, error: 'GEMINI_API_KEY not configured' };
+    return { success: false, error: 'ยังไม่ได้ตั้งค่า GEMINI_API_KEY ใน Vercel' };
   }
 
   const base64Image = imageBuffer.toString('base64');
@@ -13,8 +13,8 @@ export async function scanRosterWithGemini(imageBuffer, mimeType = 'image/jpeg')
 Analyze this airline crew roster screenshot (e.g. from AIMS e-Crew, CrewPad, NetLine, FLiCA, Sabre, or airline mobile app).
 
 The image could be:
-A) "Duty Detail" screen (e.g., Duty RERRP2LD-1, On 00:00 L, Off 23:59 L, Pairing details)
-B) "Duties List" screen (e.g., list of rows with dates like Aug 19, Aug 24, Aug 25 and pairings like 114-1: BKK-CNX, YNT, AL-1, SBM-1)
+A) "Duty Detail" screen (e.g. Duty RERRP2LD-1, On 00:00 L, Off 23:59 L, Pairing details)
+B) "Duties List" screen (e.g. rows with dates like Aug 19, Aug 24, Aug 25 and pairings like 114-1: BKK-CNX, YNT, AL-1, SBM-1)
 C) "Month" Calendar view with duty events
 D) Flight plan / briefing sheet
 
@@ -52,80 +52,76 @@ ALWAYS respond with valid JSON matching this schema:
   ]
 }
 
-If the image is completely unrelated (e.g. a picture of food, a pet, a landscape with no text), respond with:
+If the image is completely unrelated (e.g. food, pet, landscape with no text), respond with:
 {
   "hasRoster": false,
   "flights": []
 }`;
 
-  // Using Google's newest, smartest multimodal model: Gemini 2.0 Flash
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  // Candidate models across v1beta and v1
+  const modelCandidates = [
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro',
+    'gemini-1.5-pro-latest'
+  ];
 
-  const payload = {
-    contents: [
-      {
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              mimeType: mimeType,
-              data: base64Image,
+  let lastError = null;
+
+  for (const model of modelCandidates) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const payload = {
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Image,
+              },
             },
-          },
-        ],
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: "application/json",
       },
-    ],
-    generationConfig: {
-      temperature: 0.1,
-      responseMimeType: "application/json",
-    },
-  };
+    };
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      console.log(`Trying Gemini model: ${model} ...`);
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('Gemini 2.0 Flash API Error:', res.status, errText);
-      // Fallback to gemini-1.5-flash if 2.0 endpoint is unavailable
-      return fallbackGemini15(apiKey, prompt, mimeType, base64Image);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.warn(`Model ${model} returned ${res.status}:`, errText);
+        lastError = `Model ${model} (${res.status}): ${errText}`;
+        continue; // Try next model
+      }
+
+      const data = await res.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) {
+        lastError = `Model ${model} returned empty content`;
+        continue;
+      }
+
+      const parsed = JSON.parse(rawText);
+      console.log(`✅ Success with Gemini model: ${model}`, JSON.stringify(parsed));
+      return { success: true, modelUsed: model, data: parsed };
+    } catch (err) {
+      console.warn(`Exception with model ${model}:`, err.message);
+      lastError = err.message;
     }
-
-    const data = await res.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) {
-      return { success: false, error: 'Empty response from Gemini' };
-    }
-
-    const parsed = JSON.parse(rawText);
-    console.log('Gemini 2.0 OCR Success:', JSON.stringify(parsed));
-    return { success: true, data: parsed };
-  } catch (err) {
-    console.error('Gemini Vision OCR Exception:', err);
-    return { success: false, error: err.message };
   }
-}
 
-async function fallbackGemini15(apiKey, prompt, mimeType, base64Image) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType, data: base64Image } }] }],
-        generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
-      }),
-    });
-    if (!res.ok) return { success: false, error: `Fallback failed: ${res.status}` };
-    const data = await res.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return { success: true, data: JSON.parse(rawText) };
-  } catch (e) {
-    return { success: false, error: e.message };
-  }
+  return { success: false, error: lastError || 'All Gemini model candidates failed' };
 }
