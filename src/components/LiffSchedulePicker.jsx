@@ -38,10 +38,31 @@ export default function LiffSchedulePicker() {
 
   // 1. Initialize LIFF and parse query params
   useEffect(() => {
-    // Parse flights data from URL param 'd'
-    try {
+    // Helper to get 'd' param from standard query or liff.state
+    const getFlightDataParam = () => {
       const searchParams = new URLSearchParams(window.location.search);
-      const dataParam = searchParams.get('d');
+      let d = searchParams.get('d');
+      if (d) return d;
+
+      // Check inside liff.state if present
+      const liffState = searchParams.get('liff.state');
+      if (liffState) {
+        try {
+          const decodedState = decodeURIComponent(liffState);
+          const stateQuery = decodedState.includes('?') 
+            ? decodedState.split('?')[1] 
+            : decodedState.startsWith('d=') ? decodedState : '';
+          const nestedParams = new URLSearchParams(stateQuery);
+          return nestedParams.get('d');
+        } catch (err) {
+          console.warn('Failed to parse liff.state:', err);
+        }
+      }
+      return null;
+    };
+
+    try {
+      const dataParam = getFlightDataParam();
       if (dataParam) {
         const decoded = decompressFlights(dataParam);
         if (Array.isArray(decoded) && decoded.length > 0) {
