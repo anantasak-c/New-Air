@@ -38,13 +38,11 @@ export default function LiffSchedulePicker() {
 
   // 1. Initialize LIFF and parse query params
   useEffect(() => {
-    // Helper to get 'd' param from standard query or liff.state
     const getFlightDataParam = () => {
       const searchParams = new URLSearchParams(window.location.search);
       let d = searchParams.get('d');
       if (d) return d;
 
-      // Check inside liff.state if present
       const liffState = searchParams.get('liff.state');
       if (liffState) {
         try {
@@ -76,7 +74,6 @@ export default function LiffSchedulePicker() {
             }
           });
 
-          // If no active flights found, select all
           if (initialSelected.size === 0) {
             decoded.forEach((_, idx) => initialSelected.add(idx));
           }
@@ -88,7 +85,6 @@ export default function LiffSchedulePicker() {
       console.warn('Failed to parse flight data from URL:', e);
     }
 
-    // Initialize LINE LIFF
     const liffId = import.meta.env.VITE_LIFF_ID || window.__LIFF_ID__ || '2011161687-ldzW1DVD';
     if (liffId) {
       liff
@@ -107,7 +103,6 @@ export default function LiffSchedulePicker() {
     }
   }, []);
 
-  // Helpers for Stepper & Quick chips
   const adjustDressUp = (delta) => {
     setDressUpMinutes(prev => Math.max(10, Math.min(300, prev + delta)));
   };
@@ -140,7 +135,6 @@ export default function LiffSchedulePicker() {
   const totalMinutes = dressUpMinutes + transitMinutes;
   const totalHoursFormatted = (totalMinutes / 60).toFixed(1);
 
-  // Send to LINE Chat via LIFF
   const handleSendToLine = async () => {
     const selectedFlights = flights.filter((_, idx) => selectedIndices.has(idx));
     if (selectedFlights.length === 0) {
@@ -171,78 +165,59 @@ export default function LiffSchedulePicker() {
   };
 
   return (
-    <div className="min-h-screen bg-[#000000] text-[#f5f5f7] flex flex-col font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Display','Segoe_UI',Roboto,sans-serif] selection:bg-emerald-500/30 selection:text-white pb-12">
+    <div className="min-h-screen bg-[#F2F2F7] text-[#1C1C1E] flex flex-col font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Display','Segoe_UI',Roboto,sans-serif] selection:bg-emerald-500/20">
       
-      {/* iOS Sheet Top Grabber Handle */}
-      <div className="pt-2.5 pb-1 flex justify-center sticky top-0 z-40 bg-[#000000]/80 backdrop-blur-xl">
-        <div className="w-9 h-1 rounded-full bg-white/20" />
+      {/* Mobile-Optimized Compact Sheet Header */}
+      <div className="pt-2 pb-1.5 flex justify-center sticky top-0 z-30 bg-[#F2F2F7]/90 backdrop-blur-md">
+        <div className="w-10 h-1.2 rounded-full bg-slate-300" />
       </div>
 
-      {/* Apple Header */}
-      <header className="px-5 pt-1 pb-3 flex items-center justify-between sticky top-6 z-30 bg-[#000000]/80 backdrop-blur-xl border-b border-white/[0.06]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-600/30">
-            <Plane className="w-4 h-4" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold tracking-tight text-white">Flight Rest Planner</h1>
-            <p className="text-[11px] text-neutral-400 font-normal">กำหนดเวลาพักผ่อนก่อนส่งเข้า LINE</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.08] border border-white/[0.08] text-neutral-300 text-xs font-medium backdrop-blur-md">
-          <Sparkles className="w-3 h-3 text-amber-400" />
-          <span>AI Scan</span>
-        </div>
-      </header>
-
-      {/* Main Form Container */}
-      <main className="max-w-md mx-auto w-full px-4 pt-4 space-y-3.5 flex-1">
+      <main className="max-w-md mx-auto w-full px-3.5 space-y-2.5 pb-24 flex-1">
         
-        {/* Apple Health-Style Hero Summary Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#1c1c1e] to-[#121214] border border-white/[0.08] p-4.5 shadow-xl">
+        {/* Apple Health-Style Clean White Hero Widget */}
+        <div className="rounded-2xl bg-white border border-slate-200/80 p-3.5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-blue-400">
+            <div>
+              <div className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 uppercase tracking-wider">
                 <Sun className="w-3.5 h-3.5" />
                 <span>เวลารวมตื่นนอนล่วงหน้า</span>
               </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-4xl font-extrabold tracking-tight text-white">{totalHoursFormatted}</span>
-                <span className="text-sm font-medium text-neutral-400">ชั่วโมง ({totalMinutes} นาที)</span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-3xl font-extrabold tracking-tight text-slate-900">{totalHoursFormatted}</span>
+                <span className="text-xs font-semibold text-slate-500">ชม. ({totalMinutes} นาที)</span>
               </div>
             </div>
 
-            {/* Split Breakdown Badges */}
-            <div className="flex flex-col gap-1.5 text-right">
-              <div className="px-2.5 py-1 rounded-xl bg-white/[0.05] border border-white/[0.06] text-xs">
-                <span className="text-neutral-400 text-[11px]">👗 แต่งตัว: </span>
-                <span className="font-semibold text-white">{dressUpMinutes}m</span>
+            {/* Twin Breakdown Badges */}
+            <div className="flex flex-col gap-1 text-right">
+              <div className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200/60 text-[11px]">
+                <span className="text-slate-500">👗 แต่งตัว: </span>
+                <span className="font-bold text-amber-800">{dressUpMinutes}m</span>
               </div>
-              <div className="px-2.5 py-1 rounded-xl bg-white/[0.05] border border-white/[0.06] text-xs">
-                <span className="text-neutral-400 text-[11px]">🚗 เดินทาง: </span>
-                <span className="font-semibold text-white">{transitMinutes}m</span>
+              <div className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/60 text-[11px]">
+                <span className="text-slate-500">🚗 เดินทาง: </span>
+                <span className="font-bold text-emerald-800">{transitMinutes}m</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Section 1: Dress Up Time (Apple Segmented Picker) */}
-        <div className="rounded-3xl bg-[#1c1c1e] border border-white/[0.08] p-4 space-y-3 shadow-md">
+        {/* Section 1: Dress Up Time */}
+        <div className="rounded-2xl bg-white border border-slate-200/80 p-3 space-y-2 shadow-xs">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-neutral-200 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">
-                <Coffee className="w-3.5 h-3.5" />
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-md bg-amber-100 text-amber-700 flex items-center justify-center">
+                <Coffee className="w-3 h-3" />
               </span>
               เวลาเตรียมตัว / แต่งตัว
             </label>
-            <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">
-              {dressUpMinutes} นาที
+            <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/70">
+              {dressUpMinutes} นาที ({(dressUpMinutes / 60).toFixed(1)}h)
             </span>
           </div>
 
-          {/* iOS Segmented Control */}
-          <div className="bg-[#000000]/60 p-1 rounded-2xl border border-white/[0.06] grid grid-cols-3 gap-1">
+          {/* Segmented Control */}
+          <div className="bg-slate-100 p-0.5 rounded-xl border border-slate-200/70 grid grid-cols-3 gap-1">
             {[
               { label: '60 นาที (1h)', val: 60 },
               { label: '90 นาที (1.5h)', val: 90 },
@@ -254,10 +229,10 @@ export default function LiffSchedulePicker() {
                   key={chip.val}
                   type="button"
                   onClick={() => setDressUpMinutes(chip.val)}
-                  className={`py-2 px-1 text-center rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  className={`py-1.5 px-1 text-center rounded-lg text-xs font-semibold transition-all duration-150 ${
                     isActive
-                      ? 'bg-[#2c2c2e] text-white shadow-sm border border-white/10 scale-[1.02]'
-                      : 'text-neutral-400 hover:text-white'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200/90'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {chip.label}
@@ -266,49 +241,49 @@ export default function LiffSchedulePicker() {
             })}
           </div>
 
-          {/* Apple Stepper (- / + 10 min) */}
+          {/* Stepper with +/- 10 min */}
           <div className="flex items-center justify-between pt-0.5">
-            <span className="text-[11px] text-neutral-400 font-normal">ปรับละเอียด:</span>
-            <div className="flex items-center gap-2 bg-[#000000]/40 px-2 py-1 rounded-2xl border border-white/[0.06]">
+            <span className="text-[11px] text-slate-400">ปรับละเอียด:</span>
+            <div className="flex items-center gap-2 bg-slate-50 px-1.5 py-0.5 rounded-xl border border-slate-200/70">
               <button
                 type="button"
                 onClick={() => adjustDressUp(-10)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white transition-all"
+                className="w-6 h-6 rounded-full bg-white hover:bg-slate-100 border border-slate-300/80 active:scale-90 flex items-center justify-center text-slate-700 transition-all shadow-xs"
                 title="ลด 10 นาที"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-3 h-3" />
               </button>
-              <span className="w-12 text-center text-xs font-mono font-bold text-white">
+              <span className="w-10 text-center text-xs font-mono font-bold text-slate-800">
                 {dressUpMinutes}m
               </span>
               <button
                 type="button"
                 onClick={() => adjustDressUp(10)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white transition-all"
+                className="w-6 h-6 rounded-full bg-white hover:bg-slate-100 border border-slate-300/80 active:scale-90 flex items-center justify-center text-slate-700 transition-all shadow-xs"
                 title="เพิ่ม 10 นาที"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3 h-3" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Section 2: Transit Time (Apple Segmented Picker) */}
-        <div className="rounded-3xl bg-[#1c1c1e] border border-white/[0.08] p-4 space-y-3 shadow-md">
+        {/* Section 2: Transit Time */}
+        <div className="rounded-2xl bg-white border border-slate-200/80 p-3 space-y-2 shadow-xs">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-neutral-200 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-                <Car className="w-3.5 h-3.5" />
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <Car className="w-3 h-3" />
               </span>
               เวลาเดินทางไปสนามบิน
             </label>
-            <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-lg border border-emerald-400/20">
-              {transitMinutes} นาที
+            <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70">
+              {transitMinutes} นาที ({(transitMinutes / 60).toFixed(1)}h)
             </span>
           </div>
 
-          {/* iOS Segmented Control */}
-          <div className="bg-[#000000]/60 p-1 rounded-2xl border border-white/[0.06] grid grid-cols-4 gap-1">
+          {/* Segmented Control */}
+          <div className="bg-slate-100 p-0.5 rounded-xl border border-slate-200/70 grid grid-cols-4 gap-1">
             {[
               { label: '30m', val: 30 },
               { label: '45m', val: 45 },
@@ -321,10 +296,10 @@ export default function LiffSchedulePicker() {
                   key={chip.val}
                   type="button"
                   onClick={() => setTransitMinutes(chip.val)}
-                  className={`py-2 px-1 text-center rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  className={`py-1.5 px-1 text-center rounded-lg text-xs font-semibold transition-all duration-150 ${
                     isActive
-                      ? 'bg-[#2c2c2e] text-white shadow-sm border border-white/10 scale-[1.02]'
-                      : 'text-neutral-400 hover:text-white'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200/90'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {chip.label}
@@ -333,68 +308,68 @@ export default function LiffSchedulePicker() {
             })}
           </div>
 
-          {/* Apple Stepper (- / + 10 min) */}
+          {/* Stepper with +/- 10 min */}
           <div className="flex items-center justify-between pt-0.5">
-            <span className="text-[11px] text-neutral-400 font-normal">ปรับละเอียด:</span>
-            <div className="flex items-center gap-2 bg-[#000000]/40 px-2 py-1 rounded-2xl border border-white/[0.06]">
+            <span className="text-[11px] text-slate-400">ปรับละเอียด:</span>
+            <div className="flex items-center gap-2 bg-slate-50 px-1.5 py-0.5 rounded-xl border border-slate-200/70">
               <button
                 type="button"
                 onClick={() => adjustTransit(-10)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white transition-all"
+                className="w-6 h-6 rounded-full bg-white hover:bg-slate-100 border border-slate-300/80 active:scale-90 flex items-center justify-center text-slate-700 transition-all shadow-xs"
                 title="ลด 10 นาที"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-3 h-3" />
               </button>
-              <span className="w-12 text-center text-xs font-mono font-bold text-white">
+              <span className="w-10 text-center text-xs font-mono font-bold text-slate-800">
                 {transitMinutes}m
               </span>
               <button
                 type="button"
                 onClick={() => adjustTransit(10)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-white transition-all"
+                className="w-6 h-6 rounded-full bg-white hover:bg-slate-100 border border-slate-300/80 active:scale-90 flex items-center justify-center text-slate-700 transition-all shadow-xs"
                 title="เพิ่ม 10 นาที"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3 h-3" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Section 3: Multi-Day Flight Checklist (iOS Calendar/Reminders Style) */}
+        {/* Section 3: Multi-Day Flight Checklist */}
         {flights.length > 0 && (
-          <div className="rounded-3xl bg-[#1c1c1e] border border-white/[0.08] p-4 space-y-3 shadow-md">
-            <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center">
-                  <Calendar className="w-3.5 h-3.5" />
+          <div className="rounded-2xl bg-white border border-slate-200/80 p-3 space-y-2 shadow-xs">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-md bg-blue-100 text-blue-700 flex items-center justify-center">
+                  <Calendar className="w-3 h-3" />
                 </span>
-                <span className="text-xs font-semibold text-neutral-200">
-                  เลือกวันที่จะส่งเข้าแชท ({selectedIndices.size}/{flights.length})
+                <span className="text-xs font-bold text-slate-800">
+                  เลือกวันส่งเข้าแชท ({selectedIndices.size}/{flights.length})
                 </span>
               </div>
               <button
                 type="button"
                 onClick={toggleSelectAll}
-                className="text-xs font-medium text-blue-400 hover:text-blue-300 active:scale-95 transition-all"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700 active:scale-95 transition-all"
               >
                 {selectedIndices.size === flights.length ? 'ล้างทั้งหมด' : 'เลือกทั้งหมด'}
               </button>
             </div>
 
-            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
               {flights.map((flight, idx) => {
                 const isSelected = selectedIndices.has(idx);
                 const isFlight = flight.dutyType === 'flight';
                 const isStandby = flight.dutyType === 'standby';
                 const isLeave = flight.dutyType === 'leave' || flight.dutyType === 'rest';
 
-                let badgeColor = 'bg-blue-500/15 text-blue-400 border-blue-500/25';
+                let badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
                 let badgeText = '✈️ บิน';
                 if (isStandby) {
-                  badgeColor = 'bg-orange-500/15 text-orange-400 border-orange-500/25';
+                  badgeColor = 'bg-orange-50 text-orange-700 border-orange-200';
                   badgeText = '⏳ Standby';
                 } else if (isLeave) {
-                  badgeColor = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25';
+                  badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                   badgeText = '🎉 Day Off';
                 }
 
@@ -402,30 +377,30 @@ export default function LiffSchedulePicker() {
                   <div
                     key={idx}
                     onClick={() => toggleFlightIndex(idx)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? 'bg-[#2c2c2e]/90 border-blue-500/50 shadow-sm'
-                        : 'bg-[#141416] border-white/[0.04] opacity-50 hover:opacity-80'
+                        ? 'bg-emerald-50/40 border-emerald-500/50 shadow-xs'
+                        : 'bg-slate-50/70 border-slate-200/60 opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       {/* Apple-style circular checkbox */}
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
                         isSelected
-                          ? 'bg-[#06C755] border-[#06C755] text-white shadow-sm'
-                          : 'border-neutral-500 bg-transparent'
+                          ? 'bg-[#06C755] border-[#06C755] text-white shadow-xs'
+                          : 'border-slate-300 bg-white'
                       }`}>
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
 
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white">{flight.date}</span>
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-slate-900">{flight.date}</span>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded-md border ${badgeColor}`}>
                             {badgeText}
                           </span>
                         </div>
-                        <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5 font-normal">
+                        <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                           {flight.pairing}
                         </p>
                       </div>
@@ -433,11 +408,11 @@ export default function LiffSchedulePicker() {
 
                     <div className="text-right pl-2">
                       {flight.reportTime ? (
-                        <div className="text-xs font-mono font-bold text-blue-300">
+                        <div className="text-xs font-mono font-bold text-blue-700">
                           {flight.reportTime} L
                         </div>
                       ) : (
-                        <div className="text-[11px] text-neutral-500">
+                        <div className="text-[11px] text-slate-400">
                           ทั้งวัน
                         </div>
                       )}
@@ -449,38 +424,39 @@ export default function LiffSchedulePicker() {
           </div>
         )}
 
-        {/* Action Button (Vibrant Apple Green / LINE Emerald) */}
-        <div className="pt-2 sticky bottom-4 z-20">
-          <button
-            type="button"
-            disabled={sending || selectedIndices.size === 0}
-            onClick={handleSendToLine}
-            className={`w-full py-4 px-6 rounded-2xl font-bold text-base flex items-center justify-center gap-2 shadow-2xl transition-all duration-200 active:scale-[0.98] ${
-              selectedIndices.size === 0
-                ? 'bg-neutral-800 text-neutral-500 border border-neutral-700/50 cursor-not-allowed'
-                : 'bg-[#06C755] hover:bg-[#05b34c] text-white shadow-emerald-500/25 border border-emerald-400/30 ring-4 ring-emerald-500/10'
-            }`}
-          >
-            {sending ? (
-              <span className="flex items-center gap-2">
-                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                กำลังส่งเข้า LINE...
-              </span>
-            ) : sentSuccess ? (
-              <span className="flex items-center gap-2 text-white font-bold">
-                <CheckCircle2 className="w-5 h-5" />
-                ส่งเรียบร้อยแล้ว! กำลังปิดหน้าต่าง...
-              </span>
-            ) : (
-              <>
-                <Send className="w-4 h-4 fill-current" />
-                <span>คำนวณ & ส่งเข้า LINE ({selectedIndices.size} รายการ)</span>
-              </>
-            )}
-          </button>
-        </div>
-
       </main>
+
+      {/* Floating Bottom Action Button (Apple Green / LINE Emerald) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/80 p-3 pb-safe max-w-md mx-auto shadow-lg">
+        <button
+          type="button"
+          disabled={sending || selectedIndices.size === 0}
+          onClick={handleSendToLine}
+          className={`w-full py-3.5 px-5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all duration-150 active:scale-[0.98] ${
+            selectedIndices.size === 0
+              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              : 'bg-[#06C755] hover:bg-[#05b34c] text-white shadow-emerald-500/25 border border-emerald-400/30'
+          }`}
+        >
+          {sending ? (
+            <span className="flex items-center gap-2">
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              กำลังส่งเข้า LINE...
+            </span>
+          ) : sentSuccess ? (
+            <span className="flex items-center gap-2 text-white font-bold">
+              <CheckCircle2 className="w-4 h-4" />
+              ส่งเรียบร้อยแล้ว! กำลังปิดหน้าต่าง...
+            </span>
+          ) : (
+            <>
+              <Send className="w-4 h-4 fill-current" />
+              <span>คำนวณ & ส่งเข้า LINE ({selectedIndices.size} รายการ)</span>
+            </>
+          )}
+        </button>
+      </div>
+
     </div>
   );
 }
