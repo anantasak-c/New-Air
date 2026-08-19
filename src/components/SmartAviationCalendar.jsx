@@ -26,11 +26,6 @@ const MONTH_NAMES_EN = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-const MONTH_NAMES_TH = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
-
 const WEEKDAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 function parseFlightDay(dateStr) {
@@ -52,7 +47,6 @@ export default function SmartAviationCalendar({
   // Selected Event Popover Modal State
   const [activeModalFlight, setActiveModalFlight] = useState(null);
   const [selectedDay, setSelectedDay] = useState(19); // Today marker (Aug 19, 2026)
-  const [viewMode, setViewMode] = useState('month'); // 'month' or 'agenda'
   const [copied, setCopied] = useState(false);
 
   // Group flights by day of month
@@ -93,6 +87,78 @@ export default function SmartAviationCalendar({
     setSelectedDay(19);
   };
 
+  // Build weeks matrix
+  const weeks = [];
+  let currentWeek = [];
+  
+  // 1. Previous month days
+  for (let i = 0; i < firstDayWeekday; i++) {
+    const d = prevMonthDays - firstDayWeekday + i + 1;
+    currentWeek.push({ dayNum: d, isCurrentMonth: false });
+  }
+
+  // 2. Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    currentWeek.push({ dayNum: d, isCurrentMonth: true });
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  }
+
+  // 3. Next month filler days
+  if (currentWeek.length > 0) {
+    let nextD = 1;
+    while (currentWeek.length < 7) {
+      currentWeek.push({ dayNum: nextD++, isCurrentMonth: false });
+    }
+    weeks.push(currentWeek);
+  }
+
+  // Identify multi-day span events (overnight flights or multi-day consecutive duties)
+  // e.g. YNT_ExWOIFR-1 spanning 25 -> 26, RERRP 19 -> 20, AL 21 -> 22, RERRP 27 -> 28, SBM/STB 20 -> 21
+  const processedSpans = [];
+  const handledFlightIndices = new Set();
+
+  flights.forEach((f, idx) => {
+    if (handledFlightIndices.has(idx)) return;
+    const startDay = parseFlightDay(f.date);
+    if (!startDay) return;
+
+    let endDay = startDay;
+
+    // Check if pairing explicitly spans overnight (e.g. "Aug 25 ... - Aug 26") or release < report
+    const isOvernight = (f.pairing && f.pairing.includes('- Aug')) || 
+      (f.date && f.date.includes('-')) ||
+      (f.reportTime && f.releaseTime && parseInt(f.releaseTime.split(':')[0], 10) < parseInt(f.reportTime.split(':')[0], 10));
+
+    if (isOvernight) {
+      endDay = startDay + 1;
+    } else {
+      // Check next flight to see if it's the same continuous block (e.g. multi-day Day Off or multi-day Standby)
+      let nextIdx = idx + 1;
+      while (nextIdx < flights.length) {
+        const nextF = flights[nextIdx];
+        const nextDay = parseFlightDay(nextF.date);
+        if (nextDay === endDay + 1 && nextF.pairing === f.pairing && nextF.dutyType === f.dutyType) {
+          endDay = nextDay;
+          handledFlightIndices.add(nextIdx);
+          nextIdx++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    handledFlightIndices.add(idx);
+    processedSpans.push({
+      ...f,
+      startDay,
+      endDay,
+      isMultiDay: endDay > startDay
+    });
+  });
+
   // Open modal detail for a flight
   const handleOpenFlightModal = (flight, dayNum) => {
     setSelectedDay(dayNum);
@@ -131,7 +197,7 @@ export default function SmartAviationCalendar({
           <button
             type="button"
             onClick={goToToday}
-            className="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 active:scale-95 text-xs font-semibold text-slate-700 transition shadow-2xs"
+            className="px-3.5 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 active:scale-95 text-xs font-semibold text-slate-700 transition shadow-2xs"
           >
             Today
           </button>
@@ -160,7 +226,7 @@ export default function SmartAviationCalendar({
           </h2>
         </div>
 
-        {/* Right: Sync ics button + View Toggle */}
+        {/* Right: Sync ics button */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -170,17 +236,17 @@ export default function SmartAviationCalendar({
           >
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Sync เข้า Google/Apple Calendar</span>
-            <span className="sm:hidden">Sync</span>
+            <span className="sm:hidden">Sync Cal</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Google Calendar Monthly Table Grid */}
+      {/* 2. Google Calendar Monthly Table Grid with Multi-Day Spanning Tracks */}
       <div className="w-full overflow-x-auto">
-        <div className="min-w-[600px] sm:min-w-full">
+        <div className="min-w-[640px] sm:min-w-full">
           
           {/* Weekdays Header Row */}
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/50 text-center py-2">
+          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/70 text-center py-2">
             {WEEKDAY_NAMES.map((wd, i) => (
               <div 
                 key={wd} 
@@ -193,141 +259,153 @@ export default function SmartAviationCalendar({
             ))}
           </div>
 
-          {/* Monthly Day Cells Grid */}
-          <div className="grid grid-cols-7 border-collapse">
-            
-            {/* Previous month filler cells */}
-            {Array.from({ length: firstDayWeekday }).map((_, i) => {
-              const prevDate = prevMonthDays - firstDayWeekday + i + 1;
-              return (
-                <div 
-                  key={`prev-${i}`} 
-                  className="min-h-[90px] sm:min-h-[105px] border-b border-r border-slate-200 p-1.5 bg-slate-50/40 text-slate-300 text-xs font-semibold"
-                >
-                  {prevDate}
-                </div>
-              );
-            })}
+          {/* Weeks Rows */}
+          <div className="divide-y divide-slate-200">
+            {weeks.map((week, weekIdx) => {
+              const weekStartDay = week[0].isCurrentMonth ? week[0].dayNum : 1;
+              const weekEndDay = week[6].isCurrentMonth ? week[6].dayNum : daysInMonth;
 
-            {/* Current month day cells */}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const dayNum = i + 1;
-              const flight = flightsByDay[dayNum];
-              const isToday = currentMonth === 7 && currentYear === 2026 && dayNum === 19; // Today in screenshot
-
-              const isFlight = flight?.dutyType === 'flight';
-              const isStandby = flight?.dutyType === 'standby';
-              const isLeave = flight?.dutyType === 'leave' || flight?.dutyType === 'rest';
-
-              // Check if early flight tomorrow
-              const nextFlight = flightsByDay[dayNum + 1];
-              const hasEarlyFlightTomorrow = nextFlight && nextFlight.reportTime && parseInt(nextFlight.reportTime.split(':')[0], 10) < 7;
+              // Find spans active in this week
+              const activeWeekSpans = processedSpans.filter(span => {
+                return span.startDay <= weekEndDay && span.endDay >= weekStartDay;
+              });
 
               return (
-                <div
-                  key={dayNum}
-                  onClick={() => flight ? handleOpenFlightModal(flight, dayNum) : setSelectedDay(dayNum)}
-                  className={`min-h-[90px] sm:min-h-[105px] border-b border-r border-slate-200 p-1.5 flex flex-col justify-between transition-colors relative cursor-pointer group ${
-                    isToday ? 'bg-blue-50/20' : 'hover:bg-slate-50/70'
-                  }`}
-                >
-                  {/* Day Header Row */}
-                  <div className="flex items-center justify-between">
-                    <span 
-                      className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition ${
-                        isToday
-                          ? 'bg-[#1a73e8] text-white shadow-xs'
-                          : selectedDay === dayNum
-                          ? 'bg-slate-200 text-slate-900'
-                          : 'text-slate-700 group-hover:text-slate-900'
-                      }`}
-                    >
-                      {dayNum}
-                    </span>
-
-                    {/* Moon Icon for Early Bedtime Alert */}
-                    {hasEarlyFlightTomorrow && (
-                      <span 
-                        className="flex items-center text-[10px] text-amber-500 font-bold"
-                        title="คืนนี้ต้องรีบเข้านอน (มีบินเช้าพรุ่งนี้)"
-                      >
-                        <Moon className="w-3 h-3 fill-amber-400 text-amber-500" />
-                      </span>
-                    )}
+                <div key={weekIdx} className="relative min-h-[96px] sm:min-h-[110px] flex flex-col justify-between">
+                  
+                  {/* Background 7 Day Grid Cells */}
+                  <div className="absolute inset-0 grid grid-cols-7 divide-x divide-slate-200 pointer-events-none">
+                    {week.map((dayObj, colIdx) => {
+                      const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
+                      return (
+                        <div 
+                          key={colIdx} 
+                          className={`p-1.5 flex flex-col justify-between ${
+                            !dayObj.isCurrentMonth ? 'bg-slate-50/40' : isToday ? 'bg-blue-50/20' : ''
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
 
-                  {/* Google Calendar Style Event Bars / Chips */}
-                  <div className="space-y-1 mt-1 flex-1">
-                    {flight && (
-                      <>
-                        {/* 1. Active Flight Duty Bar */}
-                        {isFlight && (
-                          <div 
-                            className="bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded px-1.5 py-0.5 text-[10.5px] font-semibold truncate shadow-2xs flex items-center gap-1 transition"
-                            title={`${flight.pairing} (Report: ${flight.reportTime || '--:--'} L)`}
+                  {/* Top Layer: Day Numbers */}
+                  <div className="grid grid-cols-7 relative z-10 p-1.5 pointer-events-auto">
+                    {week.map((dayObj, colIdx) => {
+                      const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
+                      const nextFlight = flightsByDay[dayObj.dayNum + 1];
+                      const hasEarlyFlightTomorrow = dayObj.isCurrentMonth && nextFlight && nextFlight.reportTime && parseInt(nextFlight.reportTime.split(':')[0], 10) < 7;
+
+                      return (
+                        <div 
+                          key={colIdx} 
+                          onClick={() => dayObj.isCurrentMonth && setSelectedDay(dayObj.dayNum)}
+                          className="flex items-center justify-between cursor-pointer px-1"
+                        >
+                          <span 
+                            className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition ${
+                              isToday
+                                ? 'bg-[#1a73e8] text-white shadow-xs'
+                                : selectedDay === dayObj.dayNum && dayObj.isCurrentMonth
+                                ? 'bg-slate-200 text-slate-900'
+                                : dayObj.isCurrentMonth
+                                ? 'text-slate-700'
+                                : 'text-slate-300'
+                            }`}
                           >
-                            <Plane className="w-2.5 h-2.5 flex-shrink-0" />
-                            <span className="truncate">
-                              {flight.reportTime ? `${flight.reportTime} ` : ''}{flight.pairing.split(':')[0]}
+                            {dayObj.dayNum}
+                          </span>
+
+                          {hasEarlyFlightTomorrow && (
+                            <span title="คืนนี้ต้องรีบเข้านอน (มีบินเช้าพรุ่งนี้)">
+                              <Moon className="w-3 h-3 fill-amber-400 text-amber-500" />
                             </span>
-                          </div>
-                        )}
-
-                        {/* 2. Standby Bar (Spanning block like STB in user screenshot) */}
-                        {isStandby && (
-                          <div 
-                            className="bg-[#5c6bc0] hover:bg-[#3f51b5] text-white rounded px-1.5 py-0.5 text-[10.5px] font-semibold truncate shadow-2xs flex items-center gap-1 transition"
-                            title={`Standby: ${flight.pairing} (${flight.reportTime || '02:00'} L)`}
-                          >
-                            <Clock className="w-2.5 h-2.5 flex-shrink-0" />
-                            <span className="truncate">
-                              {flight.reportTime ? `${flight.reportTime} ` : ''}STB ({flight.pairing.split(':')[0]})
-                            </span>
-                          </div>
-                        )}
-
-                        {/* 3. Day Off Bar */}
-                        {isLeave && (
-                          <div 
-                            className="bg-[#0f9d58] hover:bg-[#0b8043] text-white rounded px-1.5 py-0.5 text-[10.5px] font-semibold truncate shadow-2xs flex items-center gap-1 transition"
-                            title={`Day Off: ${flight.pairing || 'Rest'}`}
-                          >
-                            <span>🎉 Day Off</span>
-                          </div>
-                        )}
-
-                        {/* 4. Sleep Target Helper Chip (if active flight) */}
-                        {isFlight && flight.reportTime && (
-                          <div className="hidden sm:flex items-center gap-1 text-[9.5px] text-indigo-700 bg-indigo-50 border border-indigo-200/70 rounded px-1 py-0.2 truncate">
-                            <Moon className="w-2 h-2" />
-                            <span>นอน {calculateFlightSchedule(flight.reportTime, dressUpMinutes, transitMinutes).bedTime8h}</span>
-                          </div>
-                        )}
-                      </>
-                    )}
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* Cell Bottom Free Time indicator */}
-                  {flight && !isLeave && (
-                    <div className="text-[9px] text-slate-400 text-right truncate">
-                      Release {flight.releaseTime || '15:45'}
+                  {/* Middle Layer: Continuous Spanning Event Bars & Single Day Chips */}
+                  <div className="relative z-10 px-1 pb-1.5 space-y-1">
+                    {/* Render Spanning Bars */}
+                    {activeWeekSpans.map((span, spanIdx) => {
+                      // Calculate start and end column for this week (1-7)
+                      let startCol = 1;
+                      let endCol = 7;
+
+                      week.forEach((d, idx) => {
+                        if (d.isCurrentMonth && d.dayNum === span.startDay) {
+                          startCol = idx + 1;
+                        }
+                        if (d.isCurrentMonth && d.dayNum === span.endDay) {
+                          endCol = idx + 1;
+                        }
+                      });
+
+                      const colSpan = Math.max(1, endCol - startCol + 1);
+                      const isFlight = span.dutyType === 'flight';
+                      const isStandby = span.dutyType === 'standby';
+                      const isLeave = span.dutyType === 'leave' || span.dutyType === 'rest';
+
+                      let barBg = 'bg-[#1a73e8] hover:bg-[#1557b0]';
+                      let barText = `✈️ ${span.reportTime ? `${span.reportTime} ` : ''}${span.pairing.split(':')[0]}`;
+
+                      if (isStandby) {
+                        barBg = 'bg-[#5c6bc0] hover:bg-[#3f51b5]'; // Purple-Blue exactly like STB bar in screenshot
+                        barText = `⏳ STB ${span.reportTime ? `(${span.reportTime} L)` : ''}`;
+                      } else if (isLeave) {
+                        barBg = 'bg-[#0f9d58] hover:bg-[#0b8043]'; // Green like Happy birthday in screenshot
+                        barText = `🎉 Day Off (${span.pairing.split(':')[0] || 'Rest'})`;
+                      }
+
+                      return (
+                        <div key={spanIdx} className="grid grid-cols-7 gap-1">
+                          <div
+                            onClick={() => handleOpenFlightModal(span, span.startDay)}
+                            style={{
+                              gridColumn: `${startCol} / span ${colSpan}`
+                            }}
+                            className={`${barBg} text-white rounded-md px-2 py-0.5 text-[11px] font-semibold truncate shadow-2xs flex items-center justify-between cursor-pointer transition active:scale-[0.99] select-none`}
+                            title={`${span.pairing} (วันที่ ${span.startDay}${span.isMultiDay ? ` - ${span.endDay}` : ''})`}
+                          >
+                            <span className="truncate">{barText}</span>
+                            {span.isMultiDay && (
+                              <span className="text-[9.5px] opacity-85 font-mono ml-1 flex-shrink-0">
+                                {span.startDay} - {span.endDay} ส.ค.
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Single Day Sleep helper chip for active day duties */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {week.map((dayObj, colIdx) => {
+                        const flight = dayObj.isCurrentMonth ? flightsByDay[dayObj.dayNum] : null;
+                        if (!flight || flight.dutyType === 'leave' || flight.dutyType === 'rest' || !flight.reportTime) {
+                          return <div key={colIdx} />;
+                        }
+                        const sched = calculateFlightSchedule(flight.reportTime, dressUpMinutes, transitMinutes);
+                        return (
+                          <div 
+                            key={colIdx} 
+                            onClick={() => handleOpenFlightModal(flight, dayObj.dayNum)}
+                            className="hidden sm:flex items-center gap-1 text-[9.5px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200/70 rounded px-1 py-0.2 truncate cursor-pointer hover:bg-indigo-100 transition"
+                          >
+                            <Moon className="w-2.5 h-2.5 flex-shrink-0" />
+                            <span className="truncate">นอน {sched.bedTime8h}</span>
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
+                  </div>
+
                 </div>
               );
             })}
-
-            {/* Next month filler cells */}
-            {Array.from({ length: (7 - ((firstDayWeekday + daysInMonth) % 7)) % 7 }).map((_, i) => (
-              <div 
-                key={`next-${i}`} 
-                className="min-h-[90px] sm:min-h-[105px] border-b border-r border-slate-200 p-1.5 bg-slate-50/40 text-slate-300 text-xs font-semibold"
-              >
-                {i + 1}
-              </div>
-            ))}
-
           </div>
+
         </div>
       </div>
 
@@ -371,6 +449,7 @@ export default function SmartAviationCalendar({
                 </h3>
                 <p className="text-xs text-white/90 font-medium">
                   {activeModalFlight.date} • สิงหาคม 2026
+                  {activeModalFlight.isMultiDay && ` (ปฏิบัติงานข้ามวัน ${activeModalFlight.startDay} - ${activeModalFlight.endDay} ส.ค.)`}
                 </p>
               </div>
 
