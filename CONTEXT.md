@@ -49,6 +49,15 @@ The recommended bedtime hours for the night before duty:
 ### Smart Aviation Life Calendar
 A high-glanceability monthly and weekly calendar that transforms complex airline roster duty dots into an actionable visual planning board showing duty blocks, sleep slots, and free windows.
 
+### Mobile 5-Day Focus Mode (โหมด 5 วัน โฟกัสรายละเอียด)
+An adaptive mobile layout displaying 5 days per row for wider columns (~75px+), enabling un-truncated flight pairing codes (`114-1 BKK-CNX`), report times (`06:05 L`), and bedtime capsules without truncation.
+
+### Three-Tier Day Cell (การจัดวางข้อมูล 3 ชั้นในช่องวัน)
+A structured in-cell hierarchy:
+1. **Tier 1 (Header)**: Day number, weekday, and Moon icon `🌙` if early sleep is required.
+2. **Tier 2 (Duty Bar)**: Colored duty bar (`✈️ Flight`, `⏳ Standby`, `🎉 Day Off`).
+3. **Tier 3 (Sleep Capsule)**: Dedicated bedtime (`🌙 21:35 น.`) and wake-up (`☀️ 03:35 น.`) tags.
+
 ### Free Time Window (ช่วงเวลาว่างสำหรับวางแผนชีวิต)
 The safe, unencumbered hours between the end of post-flight release and the start of the next pre-duty bedtime window, available for family, social life, workouts, and personal errands.
 

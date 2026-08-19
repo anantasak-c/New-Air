@@ -20,7 +20,10 @@ import {
   Minimize2,
   Filter,
   Heart,
-  Share2
+  Share2,
+  Grid,
+  List,
+  Layers
 } from 'lucide-react';
 import { calculateFlightSchedule } from '../utils/flexBuilder';
 import { downloadIcsFile } from '../utils/icsGenerator';
@@ -36,7 +39,8 @@ const MONTH_NAMES_TH = [
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ];
 
-const WEEKDAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const WEEKDAY_NAMES_7 = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const THAI_DAY_SHORT = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 function parseFlightDay(dateStr) {
   if (!dateStr) return null;
@@ -53,10 +57,12 @@ export default function FullScreenCalendarPage() {
   const [currentYear, setCurrentYear] = useState(2026);
   const [currentMonth, setCurrentMonth] = useState(7); // 7 = August
   
+  // View Modes: 'focus5' (Default on mobile), 'week', 'month', 'agenda'
+  const [viewMode, setViewMode] = useState('focus5');
+  
   // Selected Modal
   const [activeModalFlight, setActiveModalFlight] = useState(null);
   const [selectedDay, setSelectedDay] = useState(19); // Today marker
-  const [filterType, setFilterType] = useState('all'); // 'all', 'flight', 'standby', 'leave'
   const [copied, setCopied] = useState(false);
 
   // 1. Parse flight data from URL
@@ -128,29 +134,55 @@ export default function FullScreenCalendarPage() {
     setSelectedDay(19);
   };
 
-  // Build weeks matrix
-  const weeks = [];
-  let currentWeek = [];
+  // Build 7-day weeks matrix
+  const weeks7 = [];
+  let currentWeek7 = [];
   
   for (let i = 0; i < firstDayWeekday; i++) {
     const d = prevMonthDays - firstDayWeekday + i + 1;
-    currentWeek.push({ dayNum: d, isCurrentMonth: false });
+    currentWeek7.push({ dayNum: d, isCurrentMonth: false, weekday: i });
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
-    currentWeek.push({ dayNum: d, isCurrentMonth: true });
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
+    const weekday = new Date(currentYear, currentMonth, d).getDay();
+    currentWeek7.push({ dayNum: d, isCurrentMonth: true, weekday });
+    if (currentWeek7.length === 7) {
+      weeks7.push(currentWeek7);
+      currentWeek7 = [];
     }
   }
 
-  if (currentWeek.length > 0) {
+  if (currentWeek7.length > 0) {
     let nextD = 1;
-    while (currentWeek.length < 7) {
-      currentWeek.push({ dayNum: nextD++, isCurrentMonth: false });
+    let w = (firstDayWeekday + daysInMonth) % 7;
+    while (currentWeek7.length < 7) {
+      currentWeek7.push({ dayNum: nextD++, isCurrentMonth: false, weekday: w++ % 7 });
     }
-    weeks.push(currentWeek);
+    weeks7.push(currentWeek7);
+  }
+
+  // Build 5-day rows matrix for Focus Mode (3 rows of 5 days starting around Today)
+  // Display days from 16 to 31 in 5-day chunks
+  const rows5 = [];
+  const startFocusDay = 16; // Focus around the active duty period (16 - 31)
+  const totalFocusDays = 15; // 3 rows of 5 days
+  let currentChunk5 = [];
+
+  for (let i = 0; i < totalFocusDays; i++) {
+    const d = startFocusDay + i;
+    if (d <= daysInMonth) {
+      const weekday = new Date(currentYear, currentMonth, d).getDay();
+      currentChunk5.push({ dayNum: d, isCurrentMonth: true, weekday });
+    } else {
+      const nextD = d - daysInMonth;
+      const weekday = new Date(currentYear, currentMonth + 1, nextD).getDay();
+      currentChunk5.push({ dayNum: nextD, isCurrentMonth: false, weekday });
+    }
+
+    if (currentChunk5.length === 5) {
+      rows5.push(currentChunk5);
+      currentChunk5 = [];
+    }
   }
 
   // Calculate multi-day spanning ranges
@@ -223,258 +255,484 @@ export default function FullScreenCalendarPage() {
     <div className="min-h-screen bg-[#F8FAFD] text-[#1F1F1F] flex flex-col font-[-apple-system,BlinkMacSystemFont,'Google_Sans','SF_Pro_Display','Segoe_UI',Roboto,sans-serif]">
       
       {/* 1. Full Screen Google Calendar Top Navigation Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-3.5 sm:px-6 py-2.5 flex items-center justify-between flex-wrap gap-2.5 shadow-xs">
         
         {/* Left: App Logo + Today + Month Navigation */}
-        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/20">
-              <CalendarIcon className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/20">
+              <CalendarIcon className="w-4 h-4" />
             </div>
             <div>
               <h1 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">Flight Rest Calendar</h1>
-              <p className="text-[11px] text-slate-500 font-normal">ปฏิทินวางแผนชีวิต & เวลานอนลูกเรือ</p>
+              <p className="text-[10px] text-slate-500 font-normal hidden sm:block">ปฏิทินวางแผนชีวิต & เวลานอนลูกเรือ</p>
             </div>
           </div>
 
-          <div className="h-6 w-[1px] bg-slate-200 hidden sm:block" />
+          <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
 
           {/* Today & Arrows */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={goToToday}
-              className="px-3.5 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition shadow-2xs"
+              className="px-3 py-1 rounded-full border border-slate-300 hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition shadow-2xs"
             >
-              วันนี้ (Today)
+              Today
             </button>
 
-            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
               <button
                 type="button"
                 onClick={prevMonth}
-                className="w-7 h-7 rounded-lg hover:bg-white active:scale-90 flex items-center justify-center text-slate-600 transition shadow-2xs"
+                className="w-6 h-6 rounded-lg hover:bg-white active:scale-90 flex items-center justify-center text-slate-600 transition shadow-2xs"
                 title="เดือนก่อนหน้า"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={nextMonth}
-                className="w-7 h-7 rounded-lg hover:bg-white active:scale-90 flex items-center justify-center text-slate-600 transition shadow-2xs"
+                className="w-6 h-6 rounded-lg hover:bg-white active:scale-90 flex items-center justify-center text-slate-600 transition shadow-2xs"
                 title="เดือนถัดไป"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <h2 className="text-base sm:text-xl font-bold text-slate-900 tracking-tight ml-1">
+            <h2 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight ml-1">
               {MONTH_NAMES_TH[currentMonth]} {currentYear}
-              <span className="text-xs font-normal text-slate-400 ml-1.5 hidden md:inline">({MONTH_NAMES_EN[currentMonth]})</span>
             </h2>
           </div>
         </div>
 
-        {/* Right Actions: Filters & Sync Calendar Button */}
+        {/* Right Actions: View Mode Switcher + Sync Calendar Button */}
         <div className="flex items-center gap-2 flex-wrap">
+          
+          {/* View Mode Segmented Controls */}
+          <div className="bg-slate-100 p-0.5 rounded-xl border border-slate-200 flex items-center gap-0.5 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('focus5')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'focus5'
+                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="แสดงแบบ 5 วันต่อแถว ช่องกว้างอ่านง่ายบนมือถือ"
+            >
+              🎯 5 วัน (Focus)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('month')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'month'
+                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="แสดงทั้งเดือนแบบ 7 วัน"
+            >
+              🗓️ ทั้งเดือน
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('agenda')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'agenda'
+                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="แสดงเป็นฟีดรายการทีละวัน"
+            >
+              📋 ไทม์ไลน์
+            </button>
+          </div>
+
           {/* 1-Click Sync to Calendar */}
           <button
             type="button"
             onClick={() => downloadIcsFile(flights, dressUpMinutes, transitMinutes)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-bold transition active:scale-95 shadow-md shadow-blue-600/20"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-bold transition active:scale-95 shadow-xs"
           >
-            <Download className="w-4 h-4" />
-            <span>ซิงค์เข้า Google / Apple Calendar (.ics)</span>
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Sync เข้าปฏิทิน (.ics)</span>
+            <span className="sm:hidden">Sync</span>
           </button>
         </div>
 
       </header>
 
-      {/* 2. Full-Screen Google Calendar Main Workspace */}
+      {/* 2. Main Calendar Grid Area */}
       <main className="flex-1 p-2 sm:p-4 md:p-6 max-w-7xl w-full mx-auto flex flex-col">
         
-        {/* Full-Width Calendar Card Container */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-          
-          {/* Weekday Names Header Row */}
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80 text-center py-2.5">
-            {WEEKDAY_NAMES.map((wd, i) => (
-              <div 
-                key={wd} 
-                className={`text-xs font-bold tracking-wider ${
-                  i === 0 ? 'text-rose-600' : i === 6 ? 'text-blue-600' : 'text-slate-600'
-                }`}
-              >
-                {wd}
-              </div>
-            ))}
-          </div>
+        {/* ============================================================ */}
+        {/* MODE 1: 5-DAY FOCUS MODE (แถวละ 5 วัน ช่องกว้าง อ่านง่ายสะใจ) */}
+        {/* ============================================================ */}
+        {viewMode === 'focus5' && (
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+            
+            {/* Banner Guide */}
+            <div className="bg-blue-50/70 border-b border-blue-100 px-4 py-2 flex items-center justify-between text-xs text-blue-800 font-medium">
+              <span>🎯 <strong>โหมด 5 วัน (Focus Mode)</strong>: ช่องกว้างพิเศษ แสดงชื่อไฟลท์และเวลานอนครบถ้วนชัดเจน</span>
+              <span className="text-[11px] text-blue-600">วันที่ 16 - 30 ส.ค.</span>
+            </div>
 
-          {/* Weeks Grid Matrix */}
-          <div className="divide-y divide-slate-200 flex-1 flex flex-col">
-            {weeks.map((week, weekIdx) => {
-              const weekStartDay = week[0].isCurrentMonth ? week[0].dayNum : 1;
-              const weekEndDay = week[6].isCurrentMonth ? week[6].dayNum : daysInMonth;
+            {/* 5-Day Grid Rows */}
+            <div className="divide-y divide-slate-200 flex-1 flex flex-col">
+              {rows5.map((row, rowIdx) => (
+                <div key={rowIdx} className="grid grid-cols-5 divide-x divide-slate-200 min-h-[140px] sm:min-h-[160px] flex-1">
+                  {row.map((dayObj, colIdx) => {
+                    const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
+                    const flight = dayObj.isCurrentMonth ? flightsByDay[dayObj.dayNum] : null;
+                    const isFlight = flight?.dutyType === 'flight';
+                    const isStandby = flight?.dutyType === 'standby';
+                    const isLeave = flight?.dutyType === 'leave' || flight?.dutyType === 'rest';
 
-              const activeWeekSpans = processedSpans.filter(span => {
-                return span.startDay <= weekEndDay && span.endDay >= weekStartDay;
-              });
+                    const nextFlight = flightsByDay[dayObj.dayNum + 1];
+                    const hasEarlyFlightTomorrow = dayObj.isCurrentMonth && nextFlight && nextFlight.reportTime && parseInt(nextFlight.reportTime.split(':')[0], 10) < 7;
+                    const sched = flight && flight.reportTime ? calculateFlightSchedule(flight.reportTime, dressUpMinutes, transitMinutes) : null;
 
-              return (
-                <div key={weekIdx} className="relative min-h-[110px] sm:min-h-[135px] flex-1 flex flex-col justify-between group">
-                  
-                  {/* Background 7 Day Columns */}
-                  <div className="absolute inset-0 grid grid-cols-7 divide-x divide-slate-200 pointer-events-none">
-                    {week.map((dayObj, colIdx) => {
-                      const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
-                      return (
-                        <div 
-                          key={colIdx} 
-                          className={`p-2 flex flex-col justify-between transition ${
-                            !dayObj.isCurrentMonth ? 'bg-slate-50/50' : isToday ? 'bg-blue-50/20' : ''
-                          }`}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {/* Top Layer: Day Numbers + Moon Badge */}
-                  <div className="grid grid-cols-7 relative z-10 p-2 pointer-events-auto">
-                    {week.map((dayObj, colIdx) => {
-                      const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
-                      const nextFlight = flightsByDay[dayObj.dayNum + 1];
-                      const hasEarlyFlightTomorrow = dayObj.isCurrentMonth && nextFlight && nextFlight.reportTime && parseInt(nextFlight.reportTime.split(':')[0], 10) < 7;
-
-                      return (
-                        <div 
-                          key={colIdx} 
-                          onClick={() => dayObj.isCurrentMonth && setSelectedDay(dayObj.dayNum)}
-                          className="flex items-center justify-between cursor-pointer px-1"
-                        >
-                          <span 
-                            className={`text-xs sm:text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full transition ${
-                              isToday
-                                ? 'bg-[#1a73e8] text-white shadow-xs'
-                                : selectedDay === dayObj.dayNum && dayObj.isCurrentMonth
-                                ? 'bg-slate-200 text-slate-900'
-                                : dayObj.isCurrentMonth
-                                ? 'text-slate-800'
-                                : 'text-slate-300'
-                            }`}
-                          >
-                            {dayObj.dayNum}
-                          </span>
-
-                          {hasEarlyFlightTomorrow && (
-                            <span 
-                              className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200 font-bold"
-                              title="คืนนี้ต้องรีบเข้านอน (มีบินเช้าพรุ่งนี้)"
-                            >
-                              <Moon className="w-3 h-3 fill-amber-400 text-amber-500" />
-                              <span className="hidden lg:inline">นอนเร็ว</span>
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Middle Layer: Multi-Day Spanning Bars & Detailed Event Chips */}
-                  <div className="relative z-10 px-1.5 pb-2 space-y-1.5">
-                    {activeWeekSpans.map((span, spanIdx) => {
-                      let startCol = 1;
-                      let endCol = 7;
-
-                      week.forEach((d, idx) => {
-                        if (d.isCurrentMonth && d.dayNum === span.startDay) {
-                          startCol = idx + 1;
-                        }
-                        if (d.isCurrentMonth && d.dayNum === span.endDay) {
-                          endCol = idx + 1;
-                        }
-                      });
-
-                      const colSpan = Math.max(1, endCol - startCol + 1);
-                      const isFlight = span.dutyType === 'flight';
-                      const isStandby = span.dutyType === 'standby';
-                      const isLeave = span.dutyType === 'leave' || span.dutyType === 'rest';
-
-                      let barBg = 'bg-[#1a73e8] hover:bg-[#1557b0] text-white';
-                      let barIcon = <Plane className="w-3 h-3 flex-shrink-0" />;
-                      let barTitle = `${span.reportTime ? `${span.reportTime} L • ` : ''}${span.pairing}`;
-
-                      if (isStandby) {
-                        barBg = 'bg-[#5c6bc0] hover:bg-[#3f51b5] text-white';
-                        barIcon = <Clock className="w-3 h-3 flex-shrink-0" />;
-                        barTitle = `Standby ${span.reportTime ? `(${span.reportTime} L)` : ''} • ${span.pairing}`;
-                      } else if (isLeave) {
-                        barBg = 'bg-[#0f9d58] hover:bg-[#0b8043] text-white';
-                        barIcon = <Sun className="w-3 h-3 flex-shrink-0" />;
-                        barTitle = `🎉 Day Off • ${span.pairing || 'Rest'}`;
-                      }
-
-                      return (
-                        <div key={spanIdx} className="grid grid-cols-7 gap-1.5">
-                          <div
-                            onClick={() => handleOpenFlightModal(span, span.startDay)}
-                            style={{
-                              gridColumn: `${startCol} / span ${colSpan}`
-                            }}
-                            className={`${barBg} rounded-lg px-2.5 py-1 text-xs font-semibold truncate shadow-xs flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] select-none hover:shadow-md`}
-                            title={`${span.pairing} (${span.startDay}${span.isMultiDay ? ` - ${span.endDay}` : ''} ส.ค.)`}
-                          >
-                            <div className="flex items-center gap-1.5 truncate">
-                              {barIcon}
-                              <span className="truncate">{barTitle}</span>
+                    return (
+                      <div
+                        key={colIdx}
+                        onClick={() => flight ? handleOpenFlightModal(flight, dayObj.dayNum) : setSelectedDay(dayObj.dayNum)}
+                        className={`p-2 sm:p-3 flex flex-col justify-between transition-colors cursor-pointer relative group ${
+                          isToday ? 'bg-blue-50/25' : 'hover:bg-slate-50/80'
+                        }`}
+                      >
+                        {/* Tier 1: Day Header (Number + Weekday + Moon Alert) */}
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span 
+                                className={`text-xs sm:text-sm font-bold w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full transition ${
+                                  isToday
+                                    ? 'bg-[#1a73e8] text-white shadow-xs'
+                                    : selectedDay === dayObj.dayNum && dayObj.isCurrentMonth
+                                    ? 'bg-slate-200 text-slate-900'
+                                    : 'text-slate-800'
+                                }`}
+                              >
+                                {dayObj.dayNum}
+                              </span>
+                              <span className="text-[11px] font-bold text-slate-500">
+                                {THAI_DAY_SHORT[dayObj.weekday]}
+                              </span>
                             </div>
 
-                            {span.isMultiDay && (
-                              <span className="text-[10px] opacity-90 font-mono ml-2 flex-shrink-0 px-1.5 py-0.2 rounded bg-black/20">
-                                {span.startDay} - {span.endDay} ส.ค.
+                            {hasEarlyFlightTomorrow && (
+                              <span 
+                                className="flex items-center gap-0.5 text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200 font-bold"
+                                title="คืนนี้ต้องรีบเข้านอน (มีบินเช้าพรุ่งนี้)"
+                              >
+                                <Moon className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
+                                <span className="hidden sm:inline">นอนเร็ว</span>
                               </span>
                             )}
                           </div>
-                        </div>
-                      );
-                    })}
 
-                    {/* Bedtime & Wakeup Details Sub-Bar */}
-                    <div className="grid grid-cols-7 gap-1.5">
+                          {/* Tier 2: Colored Duty Bar (Full Text, No Truncation!) */}
+                          <div className="mt-2 space-y-1">
+                            {flight ? (
+                              <>
+                                {isFlight && (
+                                  <div className="bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-lg p-1.5 shadow-2xs transition">
+                                    <div className="flex items-center gap-1 text-[11px] font-extrabold">
+                                      <Plane className="w-3 h-3 flex-shrink-0" />
+                                      <span>{flight.reportTime ? `${flight.reportTime} L` : 'FLIGHT'}</span>
+                                    </div>
+                                    <p className="text-[10.5px] font-bold text-blue-100 leading-tight mt-0.5 line-clamp-2">
+                                      {flight.pairing}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {isStandby && (
+                                  <div className="bg-[#5c6bc0] hover:bg-[#3f51b5] text-white rounded-lg p-1.5 shadow-2xs transition">
+                                    <div className="flex items-center gap-1 text-[11px] font-extrabold">
+                                      <Clock className="w-3 h-3 flex-shrink-0" />
+                                      <span>{flight.reportTime ? `${flight.reportTime} L` : 'STANDBY'}</span>
+                                    </div>
+                                    <p className="text-[10.5px] font-bold text-indigo-100 leading-tight mt-0.5">
+                                      {flight.pairing}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {isLeave && (
+                                  <div className="bg-[#0f9d58] hover:bg-[#0b8043] text-white rounded-lg p-1.5 shadow-2xs transition">
+                                    <div className="flex items-center gap-1 text-[11px] font-extrabold">
+                                      <Sun className="w-3 h-3 flex-shrink-0" />
+                                      <span>Day Off</span>
+                                    </div>
+                                    <p className="text-[10.5px] font-medium text-emerald-100 leading-tight mt-0.5">
+                                      {flight.pairing || 'Rest'}
+                                    </p>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[10px] text-slate-400 text-center">
+                                🟢 ว่างทั้งวัน
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Tier 3: Bedtime & Wake-up Capsule (At Bottom of Cell) */}
+                        {sched && (
+                          <div className="mt-2 pt-1 border-t border-slate-100 space-y-0.5 text-[10px]">
+                            <div className="flex items-center justify-between text-indigo-700 font-bold bg-indigo-50/80 px-1.5 py-0.5 rounded">
+                              <span className="flex items-center gap-0.5">
+                                <Moon className="w-2.5 h-2.5" />
+                                <span>นอน:</span>
+                              </span>
+                              <span className="font-mono">{sched.bedTime8h}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-slate-600 px-1">
+                              <span>ตื่นนอน:</span>
+                              <span className="font-mono font-bold text-slate-900">{sched.wakeupTime}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {isLeave && (
+                          <div className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1 py-0.5 rounded text-center">
+                            🛌 ชาร์จพลังเต็มที่
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* MODE 2: FULL MONTH 7-DAY GOOGLE CALENDAR GRID */}
+        {/* ============================================================ */}
+        {viewMode === 'month' && (
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+            
+            {/* Weekdays Header */}
+            <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80 text-center py-2.5">
+              {WEEKDAY_NAMES_7.map((wd, i) => (
+                <div 
+                  key={wd} 
+                  className={`text-xs font-bold tracking-wider ${
+                    i === 0 ? 'text-rose-600' : i === 6 ? 'text-blue-600' : 'text-slate-600'
+                  }`}
+                >
+                  {wd}
+                </div>
+              ))}
+            </div>
+
+            {/* Weeks 7-Column Matrix */}
+            <div className="divide-y divide-slate-200 flex-1 flex flex-col">
+              {weeks7.map((week, weekIdx) => {
+                const weekStartDay = week[0].isCurrentMonth ? week[0].dayNum : 1;
+                const weekEndDay = week[6].isCurrentMonth ? week[6].dayNum : daysInMonth;
+
+                const activeWeekSpans = processedSpans.filter(span => {
+                  return span.startDay <= weekEndDay && span.endDay >= weekStartDay;
+                });
+
+                return (
+                  <div key={weekIdx} className="relative min-h-[110px] sm:min-h-[135px] flex-1 flex flex-col justify-between">
+                    
+                    {/* Background 7 Day Columns */}
+                    <div className="absolute inset-0 grid grid-cols-7 divide-x divide-slate-200 pointer-events-none">
                       {week.map((dayObj, colIdx) => {
-                        const flight = dayObj.isCurrentMonth ? flightsByDay[dayObj.dayNum] : null;
-                        if (!flight || flight.dutyType === 'leave' || flight.dutyType === 'rest' || !flight.reportTime) {
-                          return <div key={colIdx} />;
-                        }
-                        const sched = calculateFlightSchedule(flight.reportTime, dressUpMinutes, transitMinutes);
+                        const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
                         return (
                           <div 
                             key={colIdx} 
-                            onClick={() => handleOpenFlightModal(flight, dayObj.dayNum)}
-                            className="hidden md:flex items-center justify-between text-[10px] font-medium text-indigo-800 bg-indigo-50/90 border border-indigo-200/80 rounded-md px-1.5 py-0.5 truncate cursor-pointer hover:bg-indigo-100 transition shadow-2xs"
+                            className={`p-2 flex flex-col justify-between transition ${
+                              !dayObj.isCurrentMonth ? 'bg-slate-50/50' : isToday ? 'bg-blue-50/20' : ''
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    {/* Top Layer: Day Numbers */}
+                    <div className="grid grid-cols-7 relative z-10 p-2 pointer-events-auto">
+                      {week.map((dayObj, colIdx) => {
+                        const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
+                        const nextFlight = flightsByDay[dayObj.dayNum + 1];
+                        const hasEarlyFlightTomorrow = dayObj.isCurrentMonth && nextFlight && nextFlight.reportTime && parseInt(nextFlight.reportTime.split(':')[0], 10) < 7;
+
+                        return (
+                          <div 
+                            key={colIdx} 
+                            onClick={() => dayObj.isCurrentMonth && setSelectedDay(dayObj.dayNum)}
+                            className="flex items-center justify-between cursor-pointer px-1"
                           >
-                            <span className="flex items-center gap-1 truncate">
-                              <Moon className="w-2.5 h-2.5 text-indigo-600 flex-shrink-0" />
-                              <span className="truncate">นอน {sched.bedTime8h}</span>
+                            <span 
+                              className={`text-xs sm:text-sm font-bold w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full transition ${
+                                isToday
+                                  ? 'bg-[#1a73e8] text-white shadow-xs'
+                                  : selectedDay === dayObj.dayNum && dayObj.isCurrentMonth
+                                  ? 'bg-slate-200 text-slate-900'
+                                  : dayObj.isCurrentMonth
+                                  ? 'text-slate-800'
+                                  : 'text-slate-300'
+                              }`}
+                            >
+                              {dayObj.dayNum}
                             </span>
-                            <span className="text-slate-500 font-mono text-[9px] ml-1">
-                              ตื่น {sched.wakeupTime}
-                            </span>
+
+                            {hasEarlyFlightTomorrow && (
+                              <span title="คืนนี้ต้องรีบเข้านอน (มีบินเช้าพรุ่งนี้)">
+                                <Moon className="w-3 h-3 fill-amber-400 text-amber-500" />
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Middle Layer: Spanning Bars */}
+                    <div className="relative z-10 px-1.5 pb-2 space-y-1.5">
+                      {activeWeekSpans.map((span, spanIdx) => {
+                        let startCol = 1;
+                        let endCol = 7;
+
+                        week.forEach((d, idx) => {
+                          if (d.isCurrentMonth && d.dayNum === span.startDay) {
+                            startCol = idx + 1;
+                          }
+                          if (d.isCurrentMonth && d.dayNum === span.endDay) {
+                            endCol = idx + 1;
+                          }
+                        });
+
+                        const colSpan = Math.max(1, endCol - startCol + 1);
+                        const isFlight = span.dutyType === 'flight';
+                        const isStandby = span.dutyType === 'standby';
+                        const isLeave = span.dutyType === 'leave' || span.dutyType === 'rest';
+
+                        let barBg = 'bg-[#1a73e8] hover:bg-[#1557b0] text-white';
+                        let barIcon = <Plane className="w-3 h-3 flex-shrink-0" />;
+                        let barTitle = `${span.reportTime ? `${span.reportTime} L • ` : ''}${span.pairing}`;
+
+                        if (isStandby) {
+                          barBg = 'bg-[#5c6bc0] hover:bg-[#3f51b5] text-white';
+                          barIcon = <Clock className="w-3 h-3 flex-shrink-0" />;
+                          barTitle = `Standby ${span.reportTime ? `(${span.reportTime} L)` : ''} • ${span.pairing}`;
+                        } else if (isLeave) {
+                          barBg = 'bg-[#0f9d58] hover:bg-[#0b8043] text-white';
+                          barIcon = <Sun className="w-3 h-3 flex-shrink-0" />;
+                          barTitle = `🎉 Day Off • ${span.pairing || 'Rest'}`;
+                        }
+
+                        return (
+                          <div key={spanIdx} className="grid grid-cols-7 gap-1.5">
+                            <div
+                              onClick={() => handleOpenFlightModal(span, span.startDay)}
+                              style={{
+                                gridColumn: `${startCol} / span ${colSpan}`
+                              }}
+                              className={`${barBg} rounded-lg px-2.5 py-1 text-xs font-semibold truncate shadow-xs flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] select-none hover:shadow-md`}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                {barIcon}
+                                <span className="truncate">{barTitle}</span>
+                              </div>
+
+                              {span.isMultiDay && (
+                                <span className="text-[10px] opacity-90 font-mono ml-2 flex-shrink-0 px-1.5 py-0.2 rounded bg-black/20">
+                                  {span.startDay} - {span.endDay} ส.ค.
+                                </span>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
                     </div>
 
                   </div>
+                );
+              })}
+            </div>
 
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* MODE 3: VERTICAL AGENDA FEED (ฟีดรายการทีละวัน) */}
+        {/* ============================================================ */}
+        {viewMode === 'agenda' && (
+          <div className="space-y-3 max-w-2xl mx-auto w-full">
+            {flights.map((flight, idx) => {
+              const dayNum = parseFlightDay(flight.date);
+              const isFlight = flight.dutyType === 'flight';
+              const isStandby = flight.dutyType === 'standby';
+              const isLeave = flight.dutyType === 'leave' || flight.dutyType === 'rest';
+              const sched = flight.reportTime ? calculateFlightSchedule(flight.reportTime, dressUpMinutes, transitMinutes) : null;
+
+              return (
+                <div 
+                  key={idx}
+                  onClick={() => handleOpenFlightModal(flight, dayNum || 19)}
+                  className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition cursor-pointer space-y-3"
+                >
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-extrabold text-slate-900">{flight.date}</span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                        isFlight ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        isStandby ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                        'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}>
+                        {isFlight ? '✈️ FLIGHT' : isStandby ? '⏳ STANDBY' : '🎉 DAY OFF'}
+                      </span>
+                    </div>
+
+                    <span className="text-xs font-mono font-bold text-slate-600">
+                      {flight.reportTime ? `Report: ${flight.reportTime} L` : 'ทั้งวัน'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">{flight.pairing}</h3>
+                    {sched && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 pt-2 border-t border-slate-100 text-xs">
+                        <div className="bg-indigo-50 p-2 rounded-xl">
+                          <span className="text-slate-500 text-[11px] block">🌙 เข้านอน (8h)</span>
+                          <span className="font-bold text-indigo-700 font-mono text-sm">{sched.bedTime8h}</span>
+                        </div>
+                        <div className="bg-blue-50 p-2 rounded-xl">
+                          <span className="text-slate-500 text-[11px] block">☀️ ตื่นนอน</span>
+                          <span className="font-bold text-blue-700 font-mono text-sm">{sched.wakeupTime}</span>
+                        </div>
+                        <div className="bg-emerald-50 p-2 rounded-xl">
+                          <span className="text-slate-500 text-[11px] block">🚗 ออกจากบ้าน</span>
+                          <span className="font-bold text-emerald-700 font-mono text-sm">{sched.departureTime}</span>
+                        </div>
+                        <div className="bg-amber-50 p-2 rounded-xl">
+                          <span className="text-slate-500 text-[11px] block">☕ ว่าง (Free)</span>
+                          <span className="font-bold text-amber-800 font-mono text-sm">{flight.releaseTime || '15:45'} น.</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
+        )}
 
-        </div>
       </main>
 
-      {/* 3. Google Calendar Detail Modal */}
+      {/* 3. Detail Popover Modal */}
       {activeModalFlight && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
           <div 
