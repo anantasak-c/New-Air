@@ -351,11 +351,11 @@ export default function SmartAviationCalendar({
                       let barText = `✈️ ${span.reportTime ? `${span.reportTime} ` : ''}${span.pairing.split(':')[0]}`;
 
                       if (isStandby) {
-                        barBg = 'bg-[#5c6bc0] hover:bg-[#3f51b5]'; // Purple-Blue exactly like STB bar in screenshot
-                        barText = `⏳ STB ${span.reportTime ? `(${span.reportTime} L)` : ''}`;
+                        barBg = 'bg-[#5c6bc0] hover:bg-[#3f51b5]';
+                        barText = `⏳ STB ${span.reportTime ? `${span.reportTime} ` : ''}`;
                       } else if (isLeave) {
-                        barBg = 'bg-[#0f9d58] hover:bg-[#0b8043]'; // Green like Happy birthday in screenshot
-                        barText = `🎉 Day Off (${span.pairing.split(':')[0] || 'Rest'})`;
+                        barBg = 'bg-[#0f9d58] hover:bg-[#0b8043]';
+                        barText = span.pairing?.includes('AL') ? '🏖️ AL' : '🎉 Off';
                       }
 
                       return (

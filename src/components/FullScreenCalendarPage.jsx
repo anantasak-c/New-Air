@@ -369,21 +369,21 @@ export default function FullScreenCalendarPage() {
       <main className="flex-1 p-2 sm:p-4 md:p-6 max-w-7xl w-full mx-auto flex flex-col">
         
         {/* ============================================================ */}
-        {/* MODE 1: 5-DAY FOCUS MODE (แถวละ 5 วัน ช่องกว้าง อ่านง่ายสะใจ) */}
+        {/* MODE 1: 5-DAY FOCUS MODE (มินิมอล สะอาดตา อ่านง่ายใน 1 วินาที) */}
         {/* ============================================================ */}
         {viewMode === 'focus5' && (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
             
-            {/* Banner Guide */}
-            <div className="bg-blue-50/70 border-b border-blue-100 px-4 py-2 flex items-center justify-between text-xs text-blue-800 font-medium">
-              <span>🎯 <strong>โหมด 5 วัน (Focus Mode)</strong>: ช่องกว้างพิเศษ แสดงชื่อไฟลท์และเวลานอนครบถ้วนชัดเจน</span>
-              <span className="text-[11px] text-blue-600">วันที่ 16 - 30 ส.ค.</span>
+            {/* Minimalist Guide Banner */}
+            <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs text-slate-600 font-semibold">
+              <span>🎯 <strong>โหมด 5 วัน (Focus)</strong> • แตะช่องวันเพื่อดูรายละเอียดเวลานอน & Free Time</span>
+              <span className="text-[11px] text-blue-600 font-bold">16 - 30 ส.ค. 2026</span>
             </div>
 
             {/* 5-Day Grid Rows */}
             <div className="divide-y divide-slate-200 flex-1 flex flex-col">
               {rows5.map((row, rowIdx) => (
-                <div key={rowIdx} className="grid grid-cols-5 divide-x divide-slate-200 min-h-[140px] sm:min-h-[160px] flex-1">
+                <div key={rowIdx} className="grid grid-cols-5 divide-x divide-slate-200 min-h-[110px] sm:min-h-[125px] flex-1">
                   {row.map((dayObj, colIdx) => {
                     const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
                     const flight = dayObj.isCurrentMonth ? flightsByDay[dayObj.dayNum] : null;
@@ -393,117 +393,96 @@ export default function FullScreenCalendarPage() {
 
                     const nextFlight = flightsByDay[dayObj.dayNum + 1];
                     const hasEarlyFlightTomorrow = dayObj.isCurrentMonth && nextFlight && nextFlight.reportTime && parseInt(nextFlight.reportTime.split(':')[0], 10) < 7;
-                    const sched = flight && flight.reportTime ? calculateFlightSchedule(flight.reportTime, dressUpMinutes, transitMinutes) : null;
+
+                    // Clean Duty Code (Shortened)
+                    let shortCode = '';
+                    if (flight?.pairing) {
+                      shortCode = flight.pairing.split(':')[0].trim();
+                    }
 
                     return (
                       <div
                         key={colIdx}
                         onClick={() => flight ? handleOpenFlightModal(flight, dayObj.dayNum) : setSelectedDay(dayObj.dayNum)}
-                        className={`p-2 sm:p-3 flex flex-col justify-between transition-colors cursor-pointer relative group ${
-                          isToday ? 'bg-blue-50/25' : 'hover:bg-slate-50/80'
+                        className={`p-2 flex flex-col justify-between transition-colors cursor-pointer relative group ${
+                          isToday ? 'bg-blue-50/30' : 'hover:bg-slate-50/80'
                         }`}
                       >
-                        {/* Tier 1: Day Header (Number + Weekday + Moon Alert) */}
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <span 
-                                className={`text-xs sm:text-sm font-bold w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full transition ${
-                                  isToday
-                                    ? 'bg-[#1a73e8] text-white shadow-xs'
-                                    : selectedDay === dayObj.dayNum && dayObj.isCurrentMonth
-                                    ? 'bg-slate-200 text-slate-900'
-                                    : 'text-slate-800'
-                                }`}
-                              >
-                                {dayObj.dayNum}
-                              </span>
-                              <span className="text-[11px] font-bold text-slate-500">
-                                {THAI_DAY_SHORT[dayObj.weekday]}
-                              </span>
-                            </div>
-
-                            {hasEarlyFlightTomorrow && (
-                              <span 
-                                className="flex items-center gap-0.5 text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200 font-bold"
-                                title="คืนนี้ต้องรีบเข้านอน (มีบินเช้าพรุ่งนี้)"
-                              >
-                                <Moon className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
-                                <span className="hidden sm:inline">นอนเร็ว</span>
-                              </span>
-                            )}
+                        {/* Header: Date + Weekday + Moon */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <span 
+                              className={`text-xs font-extrabold w-5 h-5 flex items-center justify-center rounded-full transition ${
+                                isToday
+                                  ? 'bg-[#1a73e8] text-white shadow-xs'
+                                  : selectedDay === dayObj.dayNum && dayObj.isCurrentMonth
+                                  ? 'bg-slate-200 text-slate-900'
+                                  : 'text-slate-800'
+                              }`}
+                            >
+                              {dayObj.dayNum}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-400">
+                              {THAI_DAY_SHORT[dayObj.weekday]}
+                            </span>
                           </div>
 
-                          {/* Tier 2: Colored Duty Bar (Full Text, No Truncation!) */}
-                          <div className="mt-2 space-y-1">
-                            {flight ? (
-                              <>
-                                {isFlight && (
-                                  <div className="bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-lg p-1.5 shadow-2xs transition">
-                                    <div className="flex items-center gap-1 text-[11px] font-extrabold">
-                                      <Plane className="w-3 h-3 flex-shrink-0" />
-                                      <span>{flight.reportTime ? `${flight.reportTime} L` : 'FLIGHT'}</span>
-                                    </div>
-                                    <p className="text-[10.5px] font-bold text-blue-100 leading-tight mt-0.5 line-clamp-2">
-                                      {flight.pairing}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {isStandby && (
-                                  <div className="bg-[#5c6bc0] hover:bg-[#3f51b5] text-white rounded-lg p-1.5 shadow-2xs transition">
-                                    <div className="flex items-center gap-1 text-[11px] font-extrabold">
-                                      <Clock className="w-3 h-3 flex-shrink-0" />
-                                      <span>{flight.reportTime ? `${flight.reportTime} L` : 'STANDBY'}</span>
-                                    </div>
-                                    <p className="text-[10.5px] font-bold text-indigo-100 leading-tight mt-0.5">
-                                      {flight.pairing}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {isLeave && (
-                                  <div className="bg-[#0f9d58] hover:bg-[#0b8043] text-white rounded-lg p-1.5 shadow-2xs transition">
-                                    <div className="flex items-center gap-1 text-[11px] font-extrabold">
-                                      <Sun className="w-3 h-3 flex-shrink-0" />
-                                      <span>Day Off</span>
-                                    </div>
-                                    <p className="text-[10.5px] font-medium text-emerald-100 leading-tight mt-0.5">
-                                      {flight.pairing || 'Rest'}
-                                    </p>
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[10px] text-slate-400 text-center">
-                                🟢 ว่างทั้งวัน
-                              </div>
-                            )}
-                          </div>
+                          {hasEarlyFlightTomorrow && (
+                            <span title="คืนนี้ต้องรีบเข้านอน (มีบินเช้าพรุ่งนี้)">
+                              <Moon className="w-3 h-3 fill-amber-400 text-amber-500" />
+                            </span>
+                          )}
                         </div>
 
-                        {/* Tier 3: Bedtime & Wake-up Capsule (At Bottom of Cell) */}
-                        {sched && (
-                          <div className="mt-2 pt-1 border-t border-slate-100 space-y-0.5 text-[10px]">
-                            <div className="flex items-center justify-between text-indigo-700 font-bold bg-indigo-50/80 px-1.5 py-0.5 rounded">
-                              <span className="flex items-center gap-0.5">
-                                <Moon className="w-2.5 h-2.5" />
-                                <span>นอน:</span>
-                              </span>
-                              <span className="font-mono">{sched.bedTime8h}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-slate-600 px-1">
-                              <span>ตื่นนอน:</span>
-                              <span className="font-mono font-bold text-slate-900">{sched.wakeupTime}</span>
-                            </div>
-                          </div>
-                        )}
+                        {/* Duty Content: Report - Release & Short Code */}
+                        <div className="my-auto py-1">
+                          {flight ? (
+                            <>
+                              {/* 1. Active Flight Duty */}
+                              {isFlight && (
+                                <div className="bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-xl p-2 text-center shadow-xs transition space-y-0.5">
+                                  <div className="text-xs font-black tracking-tight font-mono">
+                                    {flight.reportTime || '--:--'} - {flight.releaseTime || '15:45'}
+                                  </div>
+                                  <div className="text-[10.5px] font-bold text-blue-100 truncate">
+                                    ✈️ {shortCode || 'Flight'}
+                                  </div>
+                                </div>
+                              )}
 
-                        {isLeave && (
-                          <div className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1 py-0.5 rounded text-center">
-                            🛌 ชาร์จพลังเต็มที่
-                          </div>
-                        )}
+                              {/* 2. Standby Duty */}
+                              {isStandby && (
+                                <div className="bg-[#5c6bc0] hover:bg-[#3f51b5] text-white rounded-xl p-2 text-center shadow-xs transition space-y-0.5">
+                                  <div className="text-xs font-black tracking-tight font-mono">
+                                    {flight.reportTime || '02:00'} - {flight.releaseTime || '12:00'}
+                                  </div>
+                                  <div className="text-[10.5px] font-bold text-indigo-100 truncate">
+                                    ⏳ STB ({shortCode || 'SBM'})
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 3. Day Off / Rest / Leave */}
+                              {isLeave && (
+                                <div className="bg-[#0f9d58] hover:bg-[#0b8043] text-white rounded-xl p-2 text-center shadow-xs transition">
+                                  <span className="text-xs font-black tracking-wider">
+                                    {flight.pairing?.includes('AL') ? '🏖️ AL' : '🎉 Off'}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            /* 4. Empty Day */
+                            <div className="text-center py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-400">
+                              ว่าง
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Minimal bottom hint */}
+                        <div className="text-[9.5px] text-slate-400 text-center font-medium">
+                          {isFlight ? 'แตะดูเวลานอน' : isStandby ? 'สแตนด์บาย' : isLeave ? 'วันพักผ่อน' : 'พักผ่อน'}
+                        </div>
                       </div>
                     );
                   })}
