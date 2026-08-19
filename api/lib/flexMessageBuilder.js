@@ -352,7 +352,7 @@ export function buildRosterFlexCarousel(flights, dressUpMinutes = 90, transitMin
   };
 }
 
-export function buildLiffInvitationCard(flights, liffUrl) {
+export function buildLiffInvitationCard(flights, liffUrl, calendarUrl) {
   // Show up to 5 flight preview rows in body
   const previewRows = flights.slice(0, 5).map(f => {
     let badgeText = '✈️';
@@ -478,6 +478,7 @@ export function buildLiffInvitationCard(flights, liffUrl) {
         layout: "vertical",
         paddingAll: "16px",
         backgroundColor: "#ffffff",
+        spacing: "sm",
         contents: [
           {
             type: "button",
@@ -486,8 +487,19 @@ export function buildLiffInvitationCard(flights, liffUrl) {
             height: "md",
             action: {
               type: "uri",
-              label: "⚙️ เลือกวัน & คำนวณเวลานอน",
+              label: "⚙️ ปรับเวลา & ส่งเข้าแชท",
               uri: liffUrl
+            }
+          },
+          {
+            type: "button",
+            style: "secondary",
+            color: "#f1f5f9",
+            height: "sm",
+            action: {
+              type: "uri",
+              label: "📅 เปิดปฏิทินวางแผนชีวิต (เต็มจอ)",
+              uri: calendarUrl || liffUrl
             }
           }
         ]

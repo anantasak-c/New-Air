@@ -205,12 +205,29 @@ export default function LiffSchedulePicker() {
 
       <main className="max-w-md mx-auto w-full px-3.5 space-y-2.5 pb-24 flex-1">
         {activeTab === 'calendar' ? (
-          <SmartAviationCalendar 
-            flights={flights} 
-            dressUpMinutes={dressUpMinutes} 
-            transitMinutes={transitMinutes} 
-            onSendToLine={handleSendToLine}
-          />
+          <div className="space-y-2.5">
+            {/* Full Screen Link Button */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-semibold text-slate-500">
+                💡 ต้องการดูแบบแนวนอน / ช่องกว้าง?
+              </span>
+              <a
+                href={`/calendar${window.location.search}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 transition active:scale-95 shadow-2xs"
+              >
+                <span>⛶ เปิดเต็มจอ</span>
+              </a>
+            </div>
+
+            <SmartAviationCalendar 
+              flights={flights} 
+              dressUpMinutes={dressUpMinutes} 
+              transitMinutes={transitMinutes} 
+              onSendToLine={handleSendToLine}
+            />
+          </div>
         ) : (
           <>
             {/* Apple Health-Style Clean White Hero Widget */}

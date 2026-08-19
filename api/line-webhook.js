@@ -173,13 +173,15 @@ export default async function handler(req, res) {
         const compactJson = JSON.stringify(compact);
         const encodedData = Buffer.from(unescape(encodeURIComponent(compactJson))).toString('base64');
 
-        // Construct LIFF URL (Always under 600-700 characters, well below LINE's 1,000 char limit)
+        // Construct LIFF URL (Drawer) and Calendar URL (Full Screen)
         const liffUrl = LIFF_ID 
           ? `https://liff.line.me/${LIFF_ID}?d=${encodedData}`
           : `https://new-air-phi.vercel.app/liff?d=${encodedData}`;
 
+        const calendarUrl = `https://new-air-phi.vercel.app/calendar?d=${encodedData}`;
+
         console.log('LIFF URL Length:', liffUrl.length);
-        const invitationCard = buildLiffInvitationCard(flights, liffUrl);
+        const invitationCard = buildLiffInvitationCard(flights, liffUrl, calendarUrl);
         await replyLineMessage(replyToken, invitationCard);
         continue;
       }

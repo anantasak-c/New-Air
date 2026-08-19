@@ -160,8 +160,18 @@ function MainContent() {
 }
 
 import LiffSchedulePicker from './components/LiffSchedulePicker';
+import FullScreenCalendarPage from './components/FullScreenCalendarPage';
 
 export default function App() {
+  const isCalendarView = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/calendar') || 
+    window.location.search.includes('view=calendar')
+  );
+
+  if (isCalendarView) {
+    return <FullScreenCalendarPage />;
+  }
+
   const isLiffView = typeof window !== 'undefined' && (
     window.location.pathname.startsWith('/liff') || 
     window.location.search.includes('d=') ||
