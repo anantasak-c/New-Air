@@ -19,7 +19,7 @@ A sequence of flights operated by a crew member over a single duty period (e.g. 
 - **Flight Duty**: An active flight sequence with specific report and release times.
 - **Standby (SBM / SBD / SBN)**: On-call standby duty where crew must be prepared to report if called (e.g., Morning Standby `SBM-1 02:00 - 12:00`).
 - **Annual Leave (AL)**: Approved vacation / annual leave (`AL-1`).
-- **Rest / Day Off (REST)**: Mandatory rest period / day off with no flight duties (`REST-1`).
+- **Rest / Day Off (REST / RERRP)**: Mandatory rest period / day off with no flight duties (`REST-1`, `RERRP2LD-1`).
 
 ---
 
@@ -30,10 +30,10 @@ The optimal time the crew member should wake up, calculated as:
 $$\text{Wake-Up Time} = \text{Report Duty Time} - (\text{Prep Time} + \text{Transit Time})$$
 
 ### Prep Time (Preparation & Grooming)
-Time allocated at home for grooming, uniform dressing, packing flight kit, and final check (default: 1.5 hours).
+Time allocated at home for grooming, uniform dressing, packing flight kit, and final check (default: 1.5 hours / 90 minutes).
 
 ### Transit Time (Travel to Airport)
-Estimated door-to-door driving / taxi time from residence to airport terminal (default: 1.0 hour).
+Estimated door-to-door driving / taxi time from residence to airport terminal (default: 1.0 hour / 60 minutes).
 
 ### 4-Box Bedtime Schedule
 The recommended bedtime hours for the night before duty:
@@ -44,16 +44,29 @@ The recommended bedtime hours for the night before duty:
 
 ---
 
-## 3. LINE Chatbot Architecture
+## 3. Smart Lifestyle & Rest Calendar
+
+### Smart Aviation Life Calendar
+A high-glanceability monthly and weekly calendar that transforms complex airline roster duty dots into an actionable visual planning board showing duty blocks, sleep slots, and free windows.
+
+### Free Time Window (ช่วงเวลาว่างสำหรับวางแผนชีวิต)
+The safe, unencumbered hours between the end of post-flight release and the start of the next pre-duty bedtime window, available for family, social life, workouts, and personal errands.
+
+### Early Sleep Zone (โซนเตือนเข้านอนเร็ว)
+An alert zone applied to the evening preceding any early morning report time ($< 07:00\text{ L}$), cautioning crew members against scheduling late-night activities.
+
+### iCalendar (.ics) 1-Click Sync
+RFC 5545 calendar export file generating multi-layer calendar events (Flight Duty, Wakeup Alarm, Bedtime Reminder) directly into native Apple Calendar (iOS/macOS) and Google Calendar.
+
+---
+
+## 4. LINE Chatbot & LIFF Architecture
 
 ### Roster OCR (Vision Intelligence)
-The automated computer vision pipeline powered by Google Gemini 1.5/2.0 Flash to scan uploaded Roster screenshots and extract structured flight events (`duty_date`, `pairing_code`, `report_time`, `duty_type`).
+The automated computer vision pipeline powered by Google Gemini 2.5 Flash Lite to scan uploaded Roster screenshots and extract structured flight events (`date`, `pairing`, `reportTime`, `releaseTime`, `dutyType`).
 
-### Quick Reply Prompt
-An interactive 1-click prompt asking the crew member to specify their total prep + transit hours (`2.0h`, `2.5h`, `3.0h`, `3.5h`).
+### LINE Front-end Framework (LIFF)
+An embedded webview inside LINE (`LiffSchedulePicker`) enabling flight crew to interactively adjust dress-up time, transit time, and select multi-day duty items with Apple White design.
 
-### Stateless Postback
-A design pattern where extracted flight parameters are encoded directly into the LINE Quick Reply `postback.data` string, eliminating the need for server-side session databases.
-
-### Flex Carousel
-A multi-card horizontal swiper message in LINE displaying calculation cards for each flight duty discovered in the user's uploaded screenshot.
+### Compact Flight Tuple Codec (`flightCodec.js`)
+A stateless compression algorithm converting array of flight objects into compact tuples (`[date, pairing, reportTime, typeChar]`) ensuring base64 query URLs stay well below LINE's 1,000 character limit.

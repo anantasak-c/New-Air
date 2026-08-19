@@ -9,11 +9,13 @@ import {
   BedDouble, 
   Share2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Calendar
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import LiveCountdown from './LiveCountdown';
 import { useTheme } from '../context/ThemeContext';
+import { downloadIcsFile } from '../utils/icsGenerator';
 
 export default function ScheduleResults({ data, weather }) {
   const { labels, activeTheme } = useTheme();
@@ -150,20 +152,40 @@ export default function ScheduleResults({ data, weather }) {
             {/* Share to LINE Button */}
             <button
               onClick={handleShareLine}
-              className="flex items-center gap-1 px-3 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
               title="แชร์ตารางเวลาเข้า LINE"
             >
               {/* LINE Icon SVG */}
               <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                 <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.578.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.962z"/>
               </svg>
-              <span>แชร์ไป Line</span>
+              <span>Line</span>
+            </button>
+
+            {/* Sync to Calendar Button */}
+            <button
+              onClick={() => {
+                const reportH = String(reportDate.getHours()).padStart(2, '0');
+                const reportM = String(reportDate.getMinutes()).padStart(2, '0');
+                const singleFlight = [{
+                  date: `${reportDate.getDate()} Aug`,
+                  pairing: 'Flight Duty',
+                  reportTime: `${reportH}:${reportM}`,
+                  dutyType: 'flight'
+                }];
+                downloadIcsFile(singleFlight, data.prepMinutes || 90, data.travelMinutes || 60);
+              }}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
+              title="บันทึกเข้าปฏิทิน iPhone / Google Calendar"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>ปฏิทิน</span>
             </button>
 
             {/* Quick Copy Button */}
             <button
               onClick={handleCopyBriefing}
-              className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm cursor-pointer"
             >
               {copied ? (
                 <>
