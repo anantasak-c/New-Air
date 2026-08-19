@@ -14,18 +14,20 @@ import {
   Sun,
   ShieldCheck,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  Map
 } from 'lucide-react';
 import { buildRosterFlexCarousel } from '../utils/flexBuilder';
 import { decompressFlights } from '../utils/flightCodec';
 import SmartAviationCalendar from './SmartAviationCalendar';
+import RouteStoryMap from './RouteStoryMap';
 
 export default function LiffSchedulePicker() {
   const [liffInitialized, setLiffInitialized] = useState(false);
   const [liffError, setLiffError] = useState(null);
   const [isInLine, setIsInLine] = useState(false);
 
-  // Active Tab: 'settings' or 'calendar'
+  // Active Tab: 'settings', 'calendar', or 'story'
   const [activeTab, setActiveTab] = useState('settings');
 
   // Scanned flights parsed from URL
@@ -174,37 +176,51 @@ export default function LiffSchedulePicker() {
       <div className="pt-2 pb-1.5 px-4 sticky top-0 z-30 bg-[#F2F2F7]/95 backdrop-blur-md space-y-2">
         <div className="w-10 h-1.2 rounded-full bg-slate-300 mx-auto" />
         
-        {/* Apple Segmented View Switcher */}
-        <div className="max-w-md mx-auto bg-slate-200/80 p-0.5 rounded-xl grid grid-cols-2 gap-1 border border-slate-300/60 shadow-xs">
+        {/* Apple 3-Tab Segmented View Switcher */}
+        <div className="max-w-md mx-auto bg-slate-200/80 p-0.5 rounded-xl grid grid-cols-3 gap-1 border border-slate-300/60 shadow-xs">
           <button
             type="button"
             onClick={() => setActiveTab('settings')}
-            className={`py-1.5 px-2 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 ${
+            className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 ${
               activeTab === 'settings'
                 ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <span>⚙️ ปรับเวลา & ส่งผล</span>
+            <span>⚙️ ปรับเวลา</span>
           </button>
           
           <button
             type="button"
             onClick={() => setActiveTab('calendar')}
-            className={`py-1.5 px-2 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 ${
+            className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 ${
               activeTab === 'calendar'
                 ? 'bg-white text-blue-600 shadow-xs border border-slate-200'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>📅 ปฏิทินวางแผนชีวิต</span>
+            <span>📅 ปฏิทิน</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('story')}
+            className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 ${
+              activeTab === 'story'
+                ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span>🗺️ สตอรี่ IG</span>
           </button>
         </div>
       </div>
 
       <main className="max-w-md mx-auto w-full px-3.5 space-y-2.5 pb-24 flex-1">
-        {activeTab === 'calendar' ? (
+        {activeTab === 'story' ? (
+          <RouteStoryMap flights={flights} />
+        ) : activeTab === 'calendar' ? (
           <div className="space-y-2.5">
             {/* Full Screen Link Button */}
             <div className="flex items-center justify-between px-1">

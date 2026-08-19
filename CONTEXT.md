@@ -79,3 +79,19 @@ An embedded webview inside LINE (`LiffSchedulePicker`) enabling flight crew to i
 
 ### Compact Flight Tuple Codec (`flightCodec.js`)
 A stateless compression algorithm converting array of flight objects into compact tuples (`[date, pairing, reportTime, typeChar]`) ensuring base64 query URLs stay well below LINE's 1,000 character limit.
+
+---
+
+## 5. Flightradar24 & Route Story Map Engine
+
+### Crew Route Story Map (แผนที่เส้นทางบินสตอรี่)
+A dark aviation radar map rendering glowing Geodesic Great Circle flight arcs connecting all destinations in the crew member's monthly roster, with cumulative mileage and sector statistics.
+
+### Story Card Generator (การบันทึกภาพสตอรี่ 9:16)
+An in-browser image rendering engine exporting high-resolution 1080x1920 (9:16) graphics optimized for Instagram and TikTok Stories.
+
+### Flightradar24 Live Tracking Link
+Deep-link generator linking flight numbers to Flightradar24 live radar tracking (`https://www.flightradar24.com/data/flights/...`), allowing crew to share real-time flight status with family and friends.
+
+### Airport Coordinates Engine (`airportEngine.js`)
+A client-side aviation database mapping airport IATA/ICAO codes (`BKK`, `CNX`, `URT`, `HKT`, `YNT`, `TPE`, `OKA`, `KIX`, `NRT`, `HND`, `ICN`, `SIN`, `KUL`, `MEL`, `SYD`, etc.) to precise geographical coordinates and calculating great-circle distances.

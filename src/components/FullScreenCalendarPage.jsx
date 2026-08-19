@@ -28,6 +28,8 @@ import {
 import { calculateFlightSchedule } from '../utils/flexBuilder';
 import { downloadIcsFile } from '../utils/icsGenerator';
 import { decompressFlights } from '../utils/flightCodec';
+import RouteStoryMap from './RouteStoryMap';
+import { generateFlightradarUrl } from '../utils/airportEngine';
 
 const MONTH_NAMES_EN = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -348,6 +350,19 @@ export default function FullScreenCalendarPage() {
               title="แสดงเป็นฟีดรายการทีละวัน"
             >
               📋 ไทม์ไลน์
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('story')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                viewMode === 'story'
+                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-xs'
+                  : 'text-slate-700 hover:text-slate-900'
+              }`}
+              title="แผนที่เรดาร์มืด & สร้างภาพลง IG Story 9:16"
+            >
+              <span>🗺️ สตอรี่ & เรดาร์</span>
             </button>
           </div>
 
@@ -709,6 +724,13 @@ export default function FullScreenCalendarPage() {
           </div>
         )}
 
+        {/* ============================================================ */}
+        {/* MODE 4: CREW ROUTE STORY MAP & FLIGHTRADAR24 */}
+        {/* ============================================================ */}
+        {viewMode === 'story' && (
+          <RouteStoryMap flights={flights} />
+        )}
+
       </main>
 
       {/* 3. Detail Popover Modal */}
@@ -854,34 +876,49 @@ export default function FullScreenCalendarPage() {
                 </div>
               )}
 
-              {/* Modal Action Buttons */}
-              <div className="pt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleCopyEventBrief}
-                  className="flex-1 py-3 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 text-emerald-600" />
-                      <span>คัดลอกแล้ว</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>คัดลอกสรุป</span>
-                    </>
-                  )}
-                </button>
+              {/* Modal Action Buttons: Copy Brief + Google Cal + Flightradar24 */}
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyEventBrief}
+                    className="flex-1 py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-2xs"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-600" />
+                        <span>คัดลอกแล้ว</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>คัดลอกสรุป</span>
+                      </>
+                    )}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => downloadIcsFile([activeModalFlight], dressUpMinutes, transitMinutes, `${activeModalFlight.pairing || 'flight'}.ics`)}
-                  className="flex-1 py-3 px-4 rounded-xl bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow-md"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>ใส่ Google Cal</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadIcsFile([activeModalFlight], dressUpMinutes, transitMinutes, `${activeModalFlight.pairing || 'flight'}.ics`)}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-xs"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>ใส่ Calendar</span>
+                  </button>
+                </div>
+
+                {activeModalFlight.dutyType === 'flight' && (
+                  <a
+                    href={generateFlightradarUrl(activeModalFlight.pairing)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow-md"
+                  >
+                    <Radio className="w-4 h-4 text-amber-400 animate-pulse" />
+                    <span>📡 ติดตามเครื่องบินสดบน Flightradar24</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                  </a>
+                )}
               </div>
 
             </div>
