@@ -77,6 +77,9 @@ The automated computer vision pipeline powered by Google Gemini 2.5 Flash Lite t
 ### LINE Front-end Framework (LIFF)
 An embedded webview inside LINE (`LiffSchedulePicker`) enabling flight crew to interactively adjust dress-up time, transit time, and select multi-day duty items with Apple White design.
 
+### LINE White Utility Style
+The visual direction for the Calendar/LIFF primary flow: an Apple-like bright white, calm, mobile-first utility interface. Thai is used for actions and explanations, while operational pairing, airport codes, and times remain in English. Color is reserved for duty status and important actions; decorative themes do not appear in this flow.
+
 ### Compact Flight Tuple Codec (`flightCodec.js`)
 A stateless compression algorithm converting array of flight objects into compact tuples (`[date, pairing, reportTime, typeChar]`) ensuring base64 query URLs stay well below LINE's 1,000 character limit.
 

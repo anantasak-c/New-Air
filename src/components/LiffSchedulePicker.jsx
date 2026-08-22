@@ -172,47 +172,29 @@ export default function LiffSchedulePicker() {
   return (
     <div className="min-h-screen bg-[#F2F2F7] text-[#1C1C1E] flex flex-col font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Display','Segoe_UI',Roboto,sans-serif] selection:bg-emerald-500/20">
       
-      {/* Mobile-Optimized Compact Sheet Header & Apple Tab Switcher */}
-      <div className="pt-2 pb-1.5 px-4 sticky top-0 z-30 bg-[#F2F2F7]/95 backdrop-blur-md space-y-2">
+      {/* Mobile-first white utility header */}
+      <div className="pt-2 pb-2 px-4 sticky top-0 z-30 bg-[#F2F2F7]/95 backdrop-blur-md space-y-2">
         <div className="w-10 h-1.2 rounded-full bg-slate-300 mx-auto" />
         
-        {/* Apple 3-Tab Segmented View Switcher */}
-        <div className="max-w-md mx-auto bg-slate-200/80 p-0.5 rounded-xl grid grid-cols-3 gap-1 border border-slate-300/60 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab('settings')}
-            className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 ${
-              activeTab === 'settings'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <span>⚙️ ปรับเวลา</span>
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => setActiveTab('calendar')}
-            className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 ${
-              activeTab === 'calendar'
-                ? 'bg-white text-blue-600 shadow-xs border border-slate-200'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>📅 ปฏิทิน</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('story')}
-            className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 ${
-              activeTab === 'story'
-                ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <span>🗺️ สตอรี่ IG</span>
+        <div className="mx-auto flex max-w-md items-center gap-2">
+          <div className="grid flex-1 grid-cols-2 gap-1 rounded-xl border border-slate-300/60 bg-slate-200/80 p-0.5 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setActiveTab('settings')}
+              className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 ${
+                activeTab === 'settings' ? 'bg-white text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >ปรับเวลา</button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('calendar')}
+              className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 ${
+                activeTab === 'calendar' ? 'bg-white text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >ปฏิทิน</button>
+          </div>
+          <button type="button" onClick={() => setActiveTab('story')} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition hover:bg-slate-50" title="สตอรี่และเรดาร์" aria-label="สตอรี่และเรดาร์">
+            <Map className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -225,7 +207,7 @@ export default function LiffSchedulePicker() {
             {/* Full Screen Link Button */}
             <div className="flex items-center justify-between px-1">
               <span className="text-[11px] font-semibold text-slate-500">
-                💡 ต้องการดูแบบแนวนอน / ช่องกว้าง?
+                ต้องการดูแบบแนวนอน / ช่องกว้าง?
               </span>
               <a
                 href={`/calendar${window.location.search}`}
@@ -233,7 +215,7 @@ export default function LiffSchedulePicker() {
                 rel="noreferrer"
                 className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 transition active:scale-95 shadow-2xs"
               >
-                <span>⛶ เปิดเต็มจอ</span>
+                <span>เปิดเต็มจอ</span>
               </a>
             </div>
 

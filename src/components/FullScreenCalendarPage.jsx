@@ -21,9 +21,11 @@ import {
   Filter,
   Heart,
   Share2,
+  Radio,
   Grid,
   List,
-  Layers
+  Layers,
+  MoreHorizontal
 } from 'lucide-react';
 import { calculateFlightSchedule } from '../utils/flexBuilder';
 import { downloadIcsFile } from '../utils/icsGenerator';
@@ -66,6 +68,7 @@ export default function FullScreenCalendarPage() {
   const [activeModalFlight, setActiveModalFlight] = useState(null);
   const [selectedDay, setSelectedDay] = useState(19); // Today marker
   const [copied, setCopied] = useState(false);
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
 
   // 1. Parse flight data from URL
   useEffect(() => {
@@ -163,10 +166,9 @@ export default function FullScreenCalendarPage() {
     weeks7.push(currentWeek7);
   }
 
-  // Build 5-day rows matrix for Focus Mode (3 rows of 5 days starting around Today)
-  // Display days from 16 to 31 in 5-day chunks
+  // Build 5-day rows matrix for Focus Mode around the selected day.
   const rows5 = [];
-  const startFocusDay = 16; // Focus around the active duty period (16 - 31)
+  const startFocusDay = Math.max(1, Math.min(daysInMonth - 14, selectedDay - 3));
   const totalFocusDays = 15; // 3 rows of 5 days
   let currentChunk5 = [];
 
@@ -256,128 +258,44 @@ export default function FullScreenCalendarPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFD] text-[#1F1F1F] flex flex-col font-[-apple-system,BlinkMacSystemFont,'Google_Sans','SF_Pro_Display','Segoe_UI',Roboto,sans-serif]">
       
-      {/* 1. Full Screen Google Calendar Top Navigation Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-3.5 sm:px-6 py-2.5 flex items-center justify-between flex-wrap gap-2.5 shadow-xs">
-        
-        {/* Left: App Logo + Today + Month Navigation */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/20">
-              <CalendarIcon className="w-4 h-4" />
+      {/* Compact white utility header */}
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+              <CalendarIcon className="h-4 w-4" />
             </div>
-            <div>
-              <h1 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">Flight Rest Calendar</h1>
-              <p className="text-[10px] text-slate-500 font-normal hidden sm:block">ปฏิทินวางแผนชีวิต & เวลานอนลูกเรือ</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold tracking-tight text-slate-950">ตารางชีวิตลูกเรือ</p>
+              <p className="hidden text-[11px] font-medium text-slate-500 sm:block">Duty, rest และเวลานอนที่ต้องรู้</p>
             </div>
           </div>
 
-          <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
-
-          {/* Today & Arrows */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={goToToday}
-              className="px-3 py-1 rounded-full border border-slate-300 hover:bg-slate-50 active:scale-95 text-xs font-bold text-slate-700 transition shadow-2xs"
-            >
-              Today
-            </button>
-
-            <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-              <button
-                type="button"
-                onClick={prevMonth}
-                className="w-6 h-6 rounded-lg hover:bg-white active:scale-90 flex items-center justify-center text-slate-600 transition shadow-2xs"
-                title="เดือนก่อนหน้า"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={nextMonth}
-                className="w-6 h-6 rounded-lg hover:bg-white active:scale-90 flex items-center justify-center text-slate-600 transition shadow-2xs"
-                title="เดือนถัดไป"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button type="button" onClick={prevMonth} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 active:scale-95" title="เดือนก่อนหน้า"><ChevronLeft className="h-4 w-4" /></button>
+            <button type="button" onClick={goToToday} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-800 transition hover:bg-slate-50 active:scale-95">วันนี้</button>
+            <button type="button" onClick={nextMonth} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 active:scale-95" title="เดือนถัดไป"><ChevronRight className="h-4 w-4" /></button>
+            <div className="relative ml-0.5">
+              <button type="button" onClick={() => setIsActionsOpen(open => !open)} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 active:scale-95" aria-label="ตัวเลือกเพิ่มเติม" aria-expanded={isActionsOpen}><MoreHorizontal className="h-5 w-5" /></button>
+              {isActionsOpen && (
+                <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                  <button type="button" onClick={() => { setViewMode('agenda'); setIsActionsOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"><List className="h-4 w-4 text-slate-500" /> ไทม์ไลน์</button>
+                  <button type="button" onClick={() => { setViewMode('story'); setIsActionsOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"><Layers className="h-4 w-4 text-slate-500" /> สตอรี่ & เรดาร์</button>
+                  <div className="my-1 border-t border-slate-100" />
+                  <button type="button" onClick={() => { downloadIcsFile(flights, dressUpMinutes, transitMinutes); setIsActionsOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4 text-slate-500" /> ส่งออก Calendar (.ics)</button>
+                </div>
+              )}
             </div>
-
-            <h2 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight ml-1">
-              {MONTH_NAMES_TH[currentMonth]} {currentYear}
-            </h2>
           </div>
         </div>
 
-        {/* Right Actions: View Mode Switcher + Sync Calendar Button */}
-        <div className="flex items-center gap-2 flex-wrap">
-          
-          {/* View Mode Segmented Controls */}
-          <div className="bg-slate-100 p-0.5 rounded-xl border border-slate-200 flex items-center gap-0.5 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setViewMode('focus5')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'focus5'
-                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="แสดงแบบ 5 วันต่อแถว ช่องกว้างอ่านง่ายบนมือถือ"
-            >
-              🎯 5 วัน (Focus)
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('month')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'month'
-                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="แสดงทั้งเดือนแบบ 7 วัน"
-            >
-              🗓️ ทั้งเดือน
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('agenda')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'agenda'
-                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="แสดงเป็นฟีดรายการทีละวัน"
-            >
-              📋 ไทม์ไลน์
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('story')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                viewMode === 'story'
-                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900'
-              }`}
-              title="แผนที่เรดาร์มืด & สร้างภาพลง IG Story 9:16"
-            >
-              <span>🗺️ สตอรี่ & เรดาร์</span>
-            </button>
+        <div className="mx-auto mt-3 flex max-w-7xl items-center justify-between gap-3">
+          <h2 className="text-base font-semibold tracking-tight text-slate-950">{MONTH_NAMES_TH[currentMonth]} {currentYear}</h2>
+          <div className="flex rounded-xl bg-slate-100 p-1" aria-label="เลือกรูปแบบปฏิทิน">
+            <button type="button" onClick={() => setViewMode('focus5')} className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${viewMode === 'focus5' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}>5 วัน</button>
+            <button type="button" onClick={() => setViewMode('month')} className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${viewMode === 'month' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}>เดือน</button>
           </div>
-
-          {/* 1-Click Sync to Calendar */}
-          <button
-            type="button"
-            onClick={() => downloadIcsFile(flights, dressUpMinutes, transitMinutes)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-bold transition active:scale-95 shadow-xs"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Sync เข้าปฏิทิน (.ics)</span>
-            <span className="sm:hidden">Sync</span>
-          </button>
         </div>
-
       </header>
 
       {/* 2. Main Calendar Grid Area */}
@@ -389,16 +307,15 @@ export default function FullScreenCalendarPage() {
         {viewMode === 'focus5' && (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
             
-            {/* Minimalist Guide Banner */}
-            <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs text-slate-600 font-semibold">
-              <span>🎯 <strong>โหมด 5 วัน (Focus)</strong> • แตะช่องวันเพื่อดูรายละเอียดเวลานอน & Free Time</span>
-              <span className="text-[11px] text-blue-600 font-bold">16 - 30 ส.ค. 2026</span>
+            <div className="border-b border-slate-100 px-4 py-3 text-xs text-slate-500 sm:flex sm:items-center sm:justify-between">
+              <span><strong className="font-semibold text-slate-800">ภาพรวม 5 วัน</strong> · แตะ duty เพื่อดูเวลารายงานและเวลาพัก</span>
+              <span className="mt-1 block font-medium text-slate-400 sm:mt-0">{startFocusDay}–{Math.min(startFocusDay + 14, daysInMonth)} {MONTH_NAMES_TH[currentMonth]}</span>
             </div>
 
             {/* 5-Day Grid Rows */}
             <div className="divide-y divide-slate-200 flex-1 flex flex-col">
               {rows5.map((row, rowIdx) => (
-                <div key={rowIdx} className="grid grid-cols-5 divide-x divide-slate-200 min-h-[110px] sm:min-h-[125px] flex-1">
+                <div key={rowIdx} className="grid grid-cols-5 divide-x divide-slate-100 min-h-[116px] sm:min-h-[130px] flex-1">
                   {row.map((dayObj, colIdx) => {
                     const isToday = currentMonth === 7 && currentYear === 2026 && dayObj.isCurrentMonth && dayObj.dayNum === 19;
                     const flight = dayObj.isCurrentMonth ? flightsByDay[dayObj.dayNum] : null;
@@ -419,8 +336,8 @@ export default function FullScreenCalendarPage() {
                       <div
                         key={colIdx}
                         onClick={() => flight ? handleOpenFlightModal(flight, dayObj.dayNum) : setSelectedDay(dayObj.dayNum)}
-                        className={`p-2 flex flex-col justify-between transition-colors cursor-pointer relative group ${
-                          isToday ? 'bg-blue-50/30' : 'hover:bg-slate-50/80'
+                        className={`p-2.5 flex flex-col justify-between transition-colors cursor-pointer relative group ${
+                          isToday ? 'bg-slate-50' : 'hover:bg-slate-50/80'
                         }`}
                       >
                         {/* Header: Date + Weekday + Moon */}
@@ -429,7 +346,7 @@ export default function FullScreenCalendarPage() {
                             <span 
                               className={`text-xs font-extrabold w-5 h-5 flex items-center justify-center rounded-full transition ${
                                 isToday
-                                  ? 'bg-[#1a73e8] text-white shadow-xs'
+                                  ? 'bg-slate-900 text-white shadow-sm'
                                   : selectedDay === dayObj.dayNum && dayObj.isCurrentMonth
                                   ? 'bg-slate-200 text-slate-900'
                                   : 'text-slate-800'
@@ -449,54 +366,49 @@ export default function FullScreenCalendarPage() {
                           )}
                         </div>
 
-                        {/* Duty Content: Report - Release & Short Code */}
-                        <div className="my-auto py-1">
+                        {/* Duty content keeps the surface white and reserves color for status. */}
+                        <div className="my-auto py-2">
                           {flight ? (
                             <>
-                              {/* 1. Active Flight Duty */}
                               {isFlight && (
-                                <div className="bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-xl p-2 text-center shadow-xs transition space-y-0.5">
-                                  <div className="text-xs font-black tracking-tight font-mono">
+                                <div className="rounded-xl border border-slate-200 border-l-[3px] border-l-sky-500 bg-white p-2 text-left shadow-sm transition group-hover:border-slate-300">
+                                  <div className="text-xs font-bold tracking-tight font-mono text-slate-900">
                                     {flight.reportTime || '--:--'} - {flight.releaseTime || '15:45'}
                                   </div>
-                                  <div className="text-[10.5px] font-bold text-blue-100 truncate">
-                                    ✈️ {shortCode || 'Flight'}
+                                  <div className="mt-1 truncate text-[10px] font-bold tracking-wide text-sky-700">
+                                    FLIGHT · {shortCode || 'Flight'}
                                   </div>
                                 </div>
                               )}
 
-                              {/* 2. Standby Duty */}
                               {isStandby && (
-                                <div className="bg-[#5c6bc0] hover:bg-[#3f51b5] text-white rounded-xl p-2 text-center shadow-xs transition space-y-0.5">
-                                  <div className="text-xs font-black tracking-tight font-mono">
+                                <div className="rounded-xl border border-slate-200 border-l-[3px] border-l-violet-500 bg-white p-2 text-left shadow-sm transition group-hover:border-slate-300">
+                                  <div className="text-xs font-bold tracking-tight font-mono text-slate-900">
                                     {flight.reportTime || '02:00'} - {flight.releaseTime || '12:00'}
                                   </div>
-                                  <div className="text-[10.5px] font-bold text-indigo-100 truncate">
-                                    ⏳ STB ({shortCode || 'SBM'})
+                                  <div className="mt-1 truncate text-[10px] font-bold tracking-wide text-violet-700">
+                                    STANDBY · {shortCode || 'SBM'}
                                   </div>
                                 </div>
                               )}
 
-                              {/* 3. Day Off / Rest / Leave */}
                               {isLeave && (
-                                <div className="bg-[#0f9d58] hover:bg-[#0b8043] text-white rounded-xl p-2 text-center shadow-xs transition">
-                                  <span className="text-xs font-black tracking-wider">
-                                    {flight.pairing?.includes('AL') ? '🏖️ AL' : '🎉 Off'}
+                                <div className="rounded-xl border border-slate-200 border-l-[3px] border-l-emerald-500 bg-white p-2 text-left shadow-sm transition group-hover:border-slate-300">
+                                  <span className="text-xs font-bold tracking-wide text-emerald-700">
+                                    {flight.pairing?.includes('AL') ? 'ANNUAL LEAVE' : 'DAY OFF'}
                                   </span>
                                 </div>
                               )}
                             </>
                           ) : (
-                            /* 4. Empty Day */
-                            <div className="text-center py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-bold text-slate-400">
+                            <div className="py-2 text-center text-xs font-medium text-slate-400">
                               ว่าง
                             </div>
                           )}
                         </div>
 
-                        {/* Minimal bottom hint */}
                         <div className="text-[9.5px] text-slate-400 text-center font-medium">
-                          {isFlight ? 'แตะดูเวลานอน' : isStandby ? 'สแตนด์บาย' : isLeave ? 'วันพักผ่อน' : 'พักผ่อน'}
+                          {isFlight ? 'แตะดูรายละเอียด' : isStandby ? 'พร้อมเรียกตัว' : isLeave ? 'พักผ่อนเต็มวัน' : 'ไม่มี duty'}
                         </div>
                       </div>
                     );
@@ -613,18 +525,18 @@ export default function FullScreenCalendarPage() {
                         const isStandby = span.dutyType === 'standby';
                         const isLeave = span.dutyType === 'leave' || span.dutyType === 'rest';
 
-                        let barBg = 'bg-[#1a73e8] hover:bg-[#1557b0] text-white';
-                        let barIcon = <Plane className="w-3 h-3 flex-shrink-0" />;
+                        let barBg = 'border border-slate-200 border-l-[3px] border-l-sky-500 bg-white text-slate-800 hover:border-slate-300';
+                        let barIcon = <Plane className="w-3 h-3 flex-shrink-0 text-sky-600" />;
                         let barTitle = `${span.reportTime ? `${span.reportTime} L • ` : ''}${span.pairing}`;
 
                         if (isStandby) {
-                          barBg = 'bg-[#5c6bc0] hover:bg-[#3f51b5] text-white';
-                          barIcon = <Clock className="w-3 h-3 flex-shrink-0" />;
+                          barBg = 'border border-slate-200 border-l-[3px] border-l-violet-500 bg-white text-slate-800 hover:border-slate-300';
+                          barIcon = <Clock className="w-3 h-3 flex-shrink-0 text-violet-600" />;
                           barTitle = `Standby ${span.reportTime ? `(${span.reportTime} L)` : ''} • ${span.pairing}`;
                         } else if (isLeave) {
-                          barBg = 'bg-[#0f9d58] hover:bg-[#0b8043] text-white';
-                          barIcon = <Sun className="w-3 h-3 flex-shrink-0" />;
-                          barTitle = `🎉 Day Off • ${span.pairing || 'Rest'}`;
+                          barBg = 'border border-slate-200 border-l-[3px] border-l-emerald-500 bg-white text-slate-800 hover:border-slate-300';
+                          barIcon = <Sun className="w-3 h-3 flex-shrink-0 text-emerald-600" />;
+                          barTitle = `DAY OFF • ${span.pairing || 'Rest'}`;
                         }
 
                         return (
@@ -634,7 +546,7 @@ export default function FullScreenCalendarPage() {
                               style={{
                                 gridColumn: `${startCol} / span ${colSpan}`
                               }}
-                              className={`${barBg} rounded-lg px-2.5 py-1 text-xs font-semibold truncate shadow-xs flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] select-none hover:shadow-md`}
+                              className={`${barBg} rounded-lg px-2.5 py-1.5 text-xs font-semibold truncate shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] select-none hover:shadow-md`}
                             >
                               <div className="flex items-center gap-1.5 truncate">
                                 {barIcon}
@@ -642,7 +554,7 @@ export default function FullScreenCalendarPage() {
                               </div>
 
                               {span.isMultiDay && (
-                                <span className="text-[10px] opacity-90 font-mono ml-2 flex-shrink-0 px-1.5 py-0.2 rounded bg-black/20">
+                                <span className="text-[10px] text-slate-500 font-mono ml-2 flex-shrink-0 px-1.5 py-0.5 rounded bg-slate-100">
                                   {span.startDay} - {span.endDay} ส.ค.
                                 </span>
                               )}
@@ -735,22 +647,26 @@ export default function FullScreenCalendarPage() {
 
       {/* 3. Detail Popover Modal */}
       {activeModalFlight && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/35 p-0 backdrop-blur-sm sm:items-center sm:p-4 animate-fade-in">
           <div 
-            className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-scale-up"
+            className="max-h-[92vh] w-full max-w-lg overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-3xl animate-slide-up"
             onClick={e => e.stopPropagation()}
           >
             
-            {/* Popover Header Banner */}
-            <div className={`p-5 text-white flex items-start justify-between ${
-              activeModalFlight.dutyType === 'flight' 
-                ? 'bg-[#1a73e8]' 
-                : activeModalFlight.dutyType === 'standby'
-                ? 'bg-[#5c6bc0]'
-                : 'bg-[#0f9d58]'
-            }`}>
+            <div className="px-5 pt-3">
+              <div className="mx-auto h-1.5 w-10 rounded-full bg-slate-200 sm:hidden" />
+            </div>
+
+            {/* Bottom-sheet header */}
+            <div className="flex items-start justify-between px-5 pb-4 pt-3">
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase opacity-90">
+                <div className={`flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider ${
+                  activeModalFlight.dutyType === 'flight'
+                    ? 'bg-sky-50 text-sky-700'
+                    : activeModalFlight.dutyType === 'standby'
+                    ? 'bg-violet-50 text-violet-700'
+                    : 'bg-emerald-50 text-emerald-700'
+                }`}>
                   {activeModalFlight.dutyType === 'flight' ? (
                     <>
                       <Plane className="w-4 h-4" />
@@ -768,10 +684,10 @@ export default function FullScreenCalendarPage() {
                     </>
                   )}
                 </div>
-                <h3 className="text-xl font-bold leading-tight">
+                <h3 className="text-xl font-bold leading-tight text-slate-950">
                   {activeModalFlight.pairing}
                 </h3>
-                <p className="text-xs text-white/90 font-medium">
+                <p className="text-xs text-slate-500 font-medium">
                   {activeModalFlight.date} • สิงหาคม 2026
                   {activeModalFlight.isMultiDay && ` (ปฏิบัติงานข้ามวัน ${activeModalFlight.startDay} - ${activeModalFlight.endDay} ส.ค.)`}
                 </p>
@@ -780,7 +696,7 @@ export default function FullScreenCalendarPage() {
               <button
                 type="button"
                 onClick={() => setActiveModalFlight(null)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition active:scale-90"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition active:scale-90"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -792,9 +708,19 @@ export default function FullScreenCalendarPage() {
               {/* Flight Duty Timeline */}
               {modalSchedule ? (
                 <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Report</span>
+                      <span className="mt-1 block font-mono text-lg font-bold text-slate-950">{modalSchedule.reportTime} <small className="text-xs text-slate-400">L</small></span>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Release</span>
+                      <span className="mt-1 block font-mono text-lg font-bold text-slate-950">{activeModalFlight.releaseTime || '15:45'} <small className="text-xs text-slate-400">L</small></span>
+                    </div>
+                  </div>
                   <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-blue-600" />
-                    <span>ไทม์ไลน์การนอน & ปฏิบัติหน้าที่อย่างละเอียด:</span>
+                    <span>การเตรียมตัวก่อนเริ่ม duty</span>
                   </div>
 
                   <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 space-y-2.5 text-xs">
