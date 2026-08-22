@@ -49,8 +49,14 @@ The recommended bedtime hours for the night before duty:
 ### Smart Aviation Life Calendar
 A high-glanceability monthly and weekly calendar that transforms complex airline roster duty dots into an actionable visual planning board showing duty blocks, sleep slots, and free windows.
 
-### Mobile 5-Day Focus Mode (โหมด 5 วัน โฟกัสรายละเอียด)
-An adaptive mobile layout displaying 5 days per row for wider columns (~75px+), enabling un-truncated flight pairing codes (`114-1 BKK-CNX`), report times (`06:05 L`), and bedtime capsules without truncation.
+### Single-View Calendar (Mini Month + Daily List)
+The `/calendar` page's one layout (ADR 0006): a mini month map (pale duty tints — บิน=red, STB=orange, ว่าง=green, today ringed) over a daily list where duty rows show the wake time (`ตื่น HH:MM` = report − prep − transit) and consecutive free days collapse into single "ว่าง N วันติด" rows. Answers "work which day, what time, free which day, sleep when" without tapping.
+
+### Duty Tint (สีจางบอกประเภทงาน)
+The pale color language across the calendar and LIFF surfaces: flight = pale red, standby = pale orange, free/rest = pale green, on a clean white surface — color reserved for duty status only.
+
+### Mobile 5-Day Focus Mode (โหมด 5 วัน โฟกัสรายละเอียด) — retired
+An adaptive mobile layout displaying 5 days per row for wider columns (~75px+). Replaced by the Single-View Calendar (ADR 0006); recoverable from git history.
 
 ### Three-Tier Day Cell (การจัดวางข้อมูล 3 ชั้นในช่องวัน)
 A structured in-cell hierarchy:
