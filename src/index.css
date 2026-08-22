@@ -129,10 +129,23 @@ html.dark ::-webkit-scrollbar-thumb {
   background: #27272a;
 }
 
-/* ===== Route Story Map · Real World Leaflet Theme ===== */
+/* ===== Route Story Map · Obsidian Flight Graph ===== */
 .rm-leaflet {
-  background: #0b0d12;
+  background: #07080b;
   font-family: inherit;
+}
+
+/* Basemap dimming: continents read as shadows in the dark, gold graph glows on top */
+.rm-leaflet.rm-obsidian .leaflet-tile {
+  filter: brightness(0.7) saturate(0.6);
+}
+
+.rm-leaflet.rm-sky {
+  background: #eef2f6;
+}
+
+.rm-leaflet.rm-sky .leaflet-tile {
+  filter: saturate(0.8) brightness(1.03);
 }
 
 .leaflet-container.rm-leaflet .leaflet-control-attribution {
@@ -141,6 +154,11 @@ html.dark ::-webkit-scrollbar-thumb {
   font-size: 9px;
   padding: 1px 7px;
   border-radius: 8px 0 0 0;
+}
+
+.leaflet-container.rm-sky.rm-leaflet .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.7);
+  color: #94a3b8;
 }
 
 .leaflet-container.rm-leaflet .leaflet-control-attribution a {
@@ -154,6 +172,11 @@ html.dark ::-webkit-scrollbar-thumb {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
+.leaflet-container.rm-sky.rm-leaflet .leaflet-control-zoom {
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
 .leaflet-container.rm-leaflet .leaflet-control-zoom a {
   background: rgba(12, 13, 16, 0.9);
   color: #e7e9ee;
@@ -161,62 +184,75 @@ html.dark ::-webkit-scrollbar-thumb {
   backdrop-filter: blur(8px);
 }
 
+.leaflet-container.rm-sky.rm-leaflet .leaflet-control-zoom a {
+  background: rgba(255, 255, 255, 0.92);
+  color: #334155;
+}
+
 .leaflet-container.rm-leaflet .leaflet-control-zoom a:hover {
   background: rgba(30, 32, 38, 0.95);
   color: #ffffff;
 }
 
-/* Airport pins */
-.rm-pin {
+.leaflet-container.rm-sky.rm-leaflet .leaflet-control-zoom a:hover {
+  background: rgba(241, 245, 249, 0.98);
+  color: #0f172a;
+}
+
+/* Glowing airport nodes */
+.rm-node {
   position: relative;
 }
 
-.rm-pin-dot {
+.rm-orb {
   position: absolute;
-  left: -4px;
-  top: -4px;
-  width: 8px;
-  height: 8px;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
   border-radius: 9999px;
-  background: #f2f4f8;
-  box-shadow:
-    0 0 0 3px rgba(242, 244, 248, 0.14),
-    0 0 12px rgba(242, 244, 248, 0.55);
 }
 
-.rm-pin-dot.rm-pin-home {
-  background: #e7cf9e;
-  box-shadow:
-    0 0 0 3px rgba(231, 207, 158, 0.18),
-    0 0 14px rgba(231, 207, 158, 0.7);
+@keyframes rm-breathe {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
+  50% { transform: translate(-50%, -50%) scale(1.4); filter: brightness(1.25); }
 }
 
-.rm-pin-label {
+.rm-orb.rm-orb-home {
+  animation: rm-breathe 3.2s ease-in-out infinite;
+}
+
+.rm-orb-label {
   position: absolute;
   left: 9px;
   top: -6px;
   font: 600 10px/1 'Plus Jakarta Sans', 'Inter', sans-serif;
   letter-spacing: 0.09em;
-  color: rgba(255, 255, 255, 0.92);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
   white-space: nowrap;
 }
 
-.rm-pin-label.rm-label-home {
-  color: #eed9ac;
+.rm-leaflet.rm-sky .rm-orb-label {
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95);
 }
 
-.rm-pin-label.rm-label-flip {
+.rm-orb-label.rm-label-flip {
   left: auto;
   right: 9px;
   text-align: right;
 }
 
-.rm-plane-icon {
-  filter: drop-shadow(0 0 5px rgba(230, 205, 154, 0.9));
+/* Traveling light particles along routes */
+.rm-particle {
+  pointer-events: none;
 }
 
-/* Pin tooltips */
+.rm-particle > div {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+}
+
+/* Node tooltips */
 .leaflet-tooltip.rm-tip {
   background: #12141a;
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -229,4 +265,15 @@ html.dark ::-webkit-scrollbar-thumb {
 
 .leaflet-tooltip.rm-tip::before {
   border-top-color: rgba(255, 255, 255, 0.09);
+}
+
+.leaflet-container.rm-sky .leaflet-tooltip.rm-tip {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+}
+
+.leaflet-container.rm-sky .leaflet-tooltip.rm-tip::before {
+  border-top-color: rgba(15, 23, 42, 0.1);
 }
