@@ -128,3 +128,105 @@
 html.dark ::-webkit-scrollbar-thumb {
   background: #27272a;
 }
+
+/* ===== Route Story Map · Real World Leaflet Theme ===== */
+.rm-leaflet {
+  background: #0b0d12;
+  font-family: inherit;
+}
+
+.leaflet-container.rm-leaflet .leaflet-control-attribution {
+  background: rgba(10, 11, 14, 0.65);
+  color: #4b5261;
+  font-size: 9px;
+  padding: 1px 7px;
+  border-radius: 8px 0 0 0;
+}
+
+.leaflet-container.rm-leaflet .leaflet-control-attribution a {
+  color: #5d6474;
+}
+
+.leaflet-container.rm-leaflet .leaflet-control-zoom {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-container.rm-leaflet .leaflet-control-zoom a {
+  background: rgba(12, 13, 16, 0.9);
+  color: #e7e9ee;
+  border: none;
+  backdrop-filter: blur(8px);
+}
+
+.leaflet-container.rm-leaflet .leaflet-control-zoom a:hover {
+  background: rgba(30, 32, 38, 0.95);
+  color: #ffffff;
+}
+
+/* Airport pins */
+.rm-pin {
+  position: relative;
+}
+
+.rm-pin-dot {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #f2f4f8;
+  box-shadow:
+    0 0 0 3px rgba(242, 244, 248, 0.14),
+    0 0 12px rgba(242, 244, 248, 0.55);
+}
+
+.rm-pin-dot.rm-pin-home {
+  background: #e7cf9e;
+  box-shadow:
+    0 0 0 3px rgba(231, 207, 158, 0.18),
+    0 0 14px rgba(231, 207, 158, 0.7);
+}
+
+.rm-pin-label {
+  position: absolute;
+  left: 9px;
+  top: -6px;
+  font: 600 10px/1 'Plus Jakarta Sans', 'Inter', sans-serif;
+  letter-spacing: 0.09em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  white-space: nowrap;
+}
+
+.rm-pin-label.rm-label-home {
+  color: #eed9ac;
+}
+
+.rm-pin-label.rm-label-flip {
+  left: auto;
+  right: 9px;
+  text-align: right;
+}
+
+.rm-plane-icon {
+  filter: drop-shadow(0 0 5px rgba(230, 205, 154, 0.9));
+}
+
+/* Pin tooltips */
+.leaflet-tooltip.rm-tip {
+  background: #12141a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #e8eaf0;
+  border-radius: 10px;
+  font: 600 11px 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+  padding: 5px 9px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+.leaflet-tooltip.rm-tip::before {
+  border-top-color: rgba(255, 255, 255, 0.09);
+}

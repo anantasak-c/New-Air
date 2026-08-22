@@ -195,6 +195,67 @@ export function calculateMonthlyRosterRouteStats(flights = []) {
   };
 }
 
+const toRad = (deg) => (deg * Math.PI) / 180;
+const normalizeLngDelta = (delta) => ((delta + 540) % 360) - 180;
+
+// Generate points along the true Great Circle path between two coordinates
+// using spherical linear interpolation (slerp). Longitude comes from
+// atan2(y, x) of the interpolated unit vector (unwrapped relative to the
+// departure meridian) so the path never straight-lines across meridians.
+export function generateGreatCirclePoints(from, to, segments = 48) {
+  const φ1 = toRad(from.lat);
+  const λ1 = toRad(from.lng);
+  const φ2 = toRad(to.lat);
+  const λ2 = toRad(to.lng);
+  const d = 2 * Math.asin(
+    Math.sqrt(
+      Math.sin((φ2 - φ1) / 2) ** 2 +
+        Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2
+    )
+  );
+
+  const points = [];
+  if (d === 0) return [{ lat: from.lat, lng: from.lng }, { lat: to.lat, lng: to.lng }];
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const A = Math.sin((1 - t) * d) / Math.sin(d);
+    const B = Math.sin(t * d) / Math.sin(d);
+    const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2);
+    const y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2);
+    const z = A * Math.sin(φ1) + B * Math.sin(φ2);
+    let lng = (Math.atan2(y, x) * 180) / Math.PI;
+    if (lng - from.lng > 180) lng -= 360;
+    if (lng - from.lng < -180) lng += 360;
+    points.push({
+      lat: (Math.atan2(z, Math.sqrt(x * x + y * y)) * 180) / Math.PI,
+      lng
+    });
+  }
+  return points;
+}
+
+// Initial bearing (degrees from true north) from point `from` toward point `to`
+export function calculateInitialBearing(from, to) {
+  const φ1 = toRad(from.lat);
+  const φ2 = toRad(to.lat);
+  const dLng = toRad(normalizeLngDelta(to.lng - from.lng));
+  const y = Math.sin(dLng) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dLng);
+  return (((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360;
+}
+
+// Web Mercator projection: lng/lat -> global pixel coordinates at a zoom level
+// (256px tiles). Used to composite real basemap tiles onto the story canvas.
+export function projectToWebMercator(lat, lng, zoom) {
+  const scale = 256 * Math.pow(2, zoom);
+  const x = ((lng + 180) / 360) * scale;
+  const clampedLat = Math.max(-85.0511, Math.min(85.0511, lat));
+  const rad = (clampedLat * Math.PI) / 180;
+  const y = ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * scale;
+  return { x, y };
+}
+
 // Generate Flightradar24 direct tracking URL
 export function generateFlightradarUrl(pairingText, flightNumber) {
   // If flight number is e.g. "114-1", airline might be TG114 or VZ114
