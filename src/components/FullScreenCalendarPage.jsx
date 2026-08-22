@@ -200,36 +200,80 @@ export default function FullScreenCalendarPage() {
     });
   });
 
-  // List rows: one row per duty span, consecutive free days collapsed into one
-  const spanByDay = {};
+  // Timeline rows: 24h duty blocks per day (overnight spills into next day),
+  // consecutive free days collapsed into one band
   const isDutySpan = (sp) => sp && sp.dutyType !== 'leave' && sp.dutyType !== 'rest';
-  processedSpans.forEach((sp) => {
-    for (let d = sp.startDay; d <= sp.endDay; d++) spanByDay[d] = sp;
+  const minutesOfDay = (t) => {
+    if (!t) return null;
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+
+  const dutyBlocksByDay = {};
+  processedSpans.filter(isDutySpan).forEach((sp) => {
+    const startMin = minutesOfDay(sp.reportTime);
+    if (startMin === null) {
+      (dutyBlocksByDay[sp.startDay] = dutyBlocksByDay[sp.startDay] || []).push({
+        span: sp, from: 0, to: 1440, untimed: true, isStart: true
+      });
+      return;
+    }
+    const durationUnknown = sp.releaseTime == null;
+    const endAbs = durationUnknown
+      ? startMin + 480 // nominal ~8h, rendered as a fading block
+      : (() => {
+          const rel = minutesOfDay(sp.releaseTime);
+          return rel > startMin ? rel : rel + 1440;
+        })();
+
+    let cursor = startMin;
+    let dayOffset = 0;
+    while (cursor < endAbs && dayOffset < 3) {
+      const from = cursor - dayOffset * 1440;
+      const to = Math.min(endAbs - dayOffset * 1440, 1440);
+      (dutyBlocksByDay[sp.startDay + dayOffset] = dutyBlocksByDay[sp.startDay + dayOffset] || []).push({
+        span: sp,
+        from,
+        to,
+        isStart: dayOffset === 0,
+        fadesOut: durationUnknown && to >= endAbs - dayOffset * 1440
+      });
+      cursor = (dayOffset + 1) * 1440;
+      dayOffset += 1;
+    }
   });
 
-  const listRows = [];
-  let freeRun = null;
-  const flushFree = () => {
-    if (freeRun) {
-      listRows.push(freeRun);
-      freeRun = null;
+  // Days covered by a duty span but without their own timed block
+  // (e.g. the second day of a multi-day trip) — continuation, not free
+  const dutyCoverByDay = {};
+  processedSpans.filter(isDutySpan).forEach((sp) => {
+    for (let d = sp.startDay; d <= sp.endDay; d++) dutyCoverByDay[d] = sp;
+  });
+
+  const timelineRows = [];
+  let freeRunT = null;
+  const flushFreeT = () => {
+    if (freeRunT) {
+      timelineRows.push(freeRunT);
+      freeRunT = null;
     }
   };
   for (let d = 1; d <= daysInMonth; d++) {
-    const span = spanByDay[d];
-    if (isDutySpan(span)) {
-      if (span.startDay === d) {
-        flushFree();
-        listRows.push({ type: span.dutyType, day: d, span });
-      }
-    } else if (!freeRun) {
-      freeRun = { type: 'free', startDay: d, endDay: d, count: 1 };
+    const blocks = dutyBlocksByDay[d];
+    if (blocks && blocks.length) {
+      flushFreeT();
+      timelineRows.push({ type: 'day', day: d, blocks });
+    } else if (dutyCoverByDay[d]) {
+      flushFreeT();
+      timelineRows.push({ type: 'continuation', day: d, span: dutyCoverByDay[d] });
+    } else if (!freeRunT) {
+      freeRunT = { type: 'free', startDay: d, endDay: d, count: 1 };
     } else {
-      freeRun.endDay = d;
-      freeRun.count += 1;
+      freeRunT.endDay = d;
+      freeRunT.count += 1;
     }
   }
-  flushFree();
+  flushFreeT();
 
   // Auto-scroll the daily list to today on first load
   const todayRowRef = useRef(null);
@@ -352,17 +396,17 @@ export default function FullScreenCalendarPage() {
               </div>
             </section>
 
-            {/* Daily list — duty rows show wake time; free runs collapse */}
+            {/* Timeline: 24h per day, duty blocks at real times */}
             <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs">
               <div className="border-b border-slate-100 px-4 py-3 text-xs text-slate-500">
-                <strong className="font-semibold text-slate-800">ตารางรายวัน</strong> · แตะเพื่อดูแผนนอนและรายละเอียด (ตื่น = รายงาน ลบ แต่งตัว {dressUpMinutes}m + เดินทาง {transitMinutes}m)
+                <strong className="font-semibold text-slate-800">ไทม์ไลน์รายวัน</strong> · บล็อค = ช่วงงานจริง (แกน 00–24 น.) · ช่องว่างคือเวลาพัก · แตะบล็อคดูแผนนอน
               </div>
-              <div className="divide-y divide-slate-100">
-                {listRows.map((row, i) => {
+              <div className="divide-y divide-slate-100 px-3 py-2.5">
+                {timelineRows.map((row, i) => {
                   if (row.type === 'free') {
                     return (
-                      <div key={i} className="flex items-center gap-3 bg-emerald-50/40 px-4 py-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                      <div key={i} className="flex items-center gap-3 bg-emerald-50/40 my-1 rounded-2xl px-4 py-2.5">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                           <Moon className="h-4 w-4" />
                         </span>
                         <div>
@@ -377,62 +421,98 @@ export default function FullScreenCalendarPage() {
                     );
                   }
 
-                  const span = row.span;
-                  const isFlight = row.type === 'flight';
-                  const isToday = currentMonth === 7 && currentYear === 2026 && row.day === 19;
+                  if (row.type === 'continuation') {
+                    const weekday = new Date(currentYear, currentMonth, row.day).getDay();
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => handleOpenFlightModal(row.span, row.span.startDay)}
+                        className="flex cursor-pointer items-center gap-2.5 rounded-2xl px-1 py-1.5 transition hover:bg-slate-50"
+                      >
+                        <div className="w-10 shrink-0 text-right">
+                          <p className="text-sm font-extrabold leading-none text-slate-400">{row.day}</p>
+                          <p className="text-[9px] font-bold text-slate-300">{THAI_DAY_SHORT[weekday]}</p>
+                        </div>
+                        <div className="flex h-[34px] flex-1 items-center overflow-hidden rounded-xl border border-red-200/60 bg-red-50/50 px-2.5">
+                          <Plane className="h-3 w-3 shrink-0 text-red-400" />
+                          <span className="ml-1.5 truncate text-[10px] font-bold text-red-700/80">
+                            → ต่อเนื่อง {row.span.pairing.split(':')[0].trim()}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const isTodayRow = currentMonth === 7 && currentYear === 2026 && row.day === 19;
                   const weekday = new Date(currentYear, currentMonth, row.day).getDay();
-                  const sched = span.reportTime
-                    ? calculateFlightSchedule(span.reportTime, dressUpMinutes, transitMinutes)
+                  const startBlock = row.blocks.find((b) => b.isStart);
+                  const wake = startBlock && startBlock.span.reportTime
+                    ? calculateFlightSchedule(startBlock.span.reportTime, dressUpMinutes, transitMinutes).wakeupTime
                     : null;
-                  const accent = isFlight ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600';
-                  const badge = isFlight
-                    ? 'bg-red-50 text-red-700 border-red-100'
-                    : 'bg-orange-50 text-orange-700 border-orange-100';
+                  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
 
                   return (
                     <div
                       key={i}
-                      ref={isToday ? todayRowRef : null}
-                      onClick={() => handleOpenFlightModal(span, row.day)}
-                      className={`flex cursor-pointer items-center justify-between gap-3 px-4 py-3.5 transition hover:bg-slate-50/80 active:scale-[0.99] ${isToday ? 'bg-slate-50' : ''}`}
+                      ref={isTodayRow ? todayRowRef : null}
+                      className={`flex items-center gap-2.5 rounded-2xl px-1 py-1.5 ${isTodayRow ? 'bg-slate-50' : ''}`}
                     >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-2xl ${accent}`}>
-                          <span className="text-sm font-extrabold leading-none">{row.day}</span>
-                          <span className="mt-0.5 text-[9px] font-bold">{THAI_DAY_SHORT[weekday]}</span>
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${badge}`}>
-                              {isFlight ? '✈️ บิน' : '⏳ STB'}
-                            </span>
-                            {span.isMultiDay && (
-                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500">
-                                {span.startDay}–{span.endDay} {THAI_MONTH_SHORT[currentMonth]}
-                              </span>
-                            )}
-                            {isToday && (
-                              <span className="rounded-full bg-slate-900 px-1.5 py-0.5 text-[9px] font-bold text-white">วันนี้</span>
-                            )}
-                          </div>
-                          <p className="mt-1 truncate text-[13px] font-bold text-slate-900">
-                            {span.pairing}
-                          </p>
-                          <p className="text-[11px] font-medium text-slate-400">
-                            {span.reportTime ? `รายงาน ${span.reportTime} L` : 'รอเรียกตัว'}
-                            {span.releaseTime ? ` · ปล่อย ${span.releaseTime} L` : ''}
-                          </p>
-                        </div>
+                      {/* Day gutter */}
+                      <div className="w-10 shrink-0 text-right">
+                        <p className="text-sm font-extrabold leading-none text-slate-900">{row.day}</p>
+                        <p className="text-[9px] font-bold text-slate-400">{THAI_DAY_SHORT[weekday]}</p>
+                        {wake && (
+                          <p className="mt-0.5 text-[8.5px] font-bold leading-tight text-indigo-500">ตื่น {wake}</p>
+                        )}
                       </div>
 
-                      <div className="shrink-0 text-right">
-                        {sched ? (
-                          <>
-                            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">ตื่น</p>
-                            <p className="font-mono text-base font-extrabold text-slate-900">{sched.wakeupTime}</p>
-                          </>
-                        ) : (
-                          <p className="text-[10px] font-semibold text-slate-400">พร้อมเรียก</p>
+                      {/* 24h track */}
+                      <div className="relative h-[50px] flex-1 overflow-hidden rounded-xl border border-slate-100 bg-slate-50/80">
+                        {[0, 3, 6, 9, 12, 15, 18, 21].map((h) => (
+                          <div key={h} className="absolute bottom-0 top-0 w-px bg-slate-200/70" style={{ left: `${(h / 24) * 100}%` }} />
+                        ))}
+                        {[0, 6, 12, 18].map((h) => (
+                          <span key={h} className="absolute top-0.5 font-mono text-[8px] font-bold text-slate-300" style={{ left: `${(h / 24) * 100 + 0.7}%` }}>
+                            {String(h).padStart(2, '0')}
+                          </span>
+                        ))}
+
+                        {row.blocks.map((b, bi) => {
+                          const isFlight = b.span.dutyType === 'flight';
+                          const shortCode = (b.span.pairing || '').split(':')[0].trim().slice(0, 9);
+                          const leftPct = (b.from / 1440) * 100;
+                          const widthPct = ((b.to - b.from) / 1440) * 100;
+                          const base = isFlight ? '252, 165, 165' : '253, 186, 116';
+                          return (
+                            <button
+                              key={bi}
+                              type="button"
+                              onClick={() => handleOpenFlightModal(b.span, row.day)}
+                              title={`${b.span.pairing} · รายงาน ${b.span.reportTime || '--:--'} L`}
+                              className={`absolute bottom-1 top-3.5 overflow-hidden rounded-lg px-1 text-left shadow-xs transition hover:brightness-95 active:scale-95 ${b.untimed ? 'border border-dashed' : ''}`}
+                              style={{
+                                left: `${leftPct}%`,
+                                width: `${Math.max(widthPct, 3)}%`,
+                                background: b.fadesOut
+                                  ? `linear-gradient(90deg, rgba(${base}, 0.9) 0%, rgba(${base}, 0.35) 85%, rgba(${base}, 0.08) 100%)`
+                                  : `rgba(${base}, 0.75)`,
+                                borderColor: `rgba(${base}, 1)`
+                              }}
+                            >
+                              <span className="block truncate text-[8.5px] font-extrabold leading-tight text-slate-900">
+                                {b.untimed ? 'รอเรียกตัว' : shortCode}
+                              </span>
+                              <span className="block truncate font-mono text-[8px] font-bold leading-tight text-slate-700/90">
+                                {b.untimed ? 'ทั้งวัน' : b.isStart ? `${b.span.reportTime} L${b.fadesOut ? ' →' : ''}` : `→ ${b.span.releaseTime || ''}`}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {isTodayRow && (
+                          <div className="absolute bottom-0 top-0 z-10 w-[2px] bg-rose-500" style={{ left: `${(nowMin / 1440) * 100}%` }}>
+                            <span className="absolute -top-0.5 left-1 rounded bg-rose-500 px-1 text-[7px] font-bold text-white">now</span>
+                          </div>
                         )}
                       </div>
                     </div>
