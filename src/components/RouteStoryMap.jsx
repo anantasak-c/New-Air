@@ -4,7 +4,6 @@ import 'leaflet/dist/leaflet.css';
 import { feature as topoFeature } from 'topojson-client';
 import countries110m from 'world-atlas/countries-110m.json';
 import {
-  Compass,
   Download,
   ExternalLink,
   Check,
@@ -37,8 +36,7 @@ const THEMES = {
     label: 'ดำทอง',
     page: {
       section: 'bg-[#0a0b0e] border-white/[0.06]',
-      sectionAlt: 'bg-[#0b0c10] border-white/[0.06]',
-      glowBlob: 'bg-[#d9b98c]/[0.07]',
+      sheet: 'bg-[#0a0b0e]/95 backdrop-blur-xl border-white/[0.08]',
       eyebrow: 'text-[#d9b98c]',
       heading: 'text-white',
       sub: 'text-slate-400/90',
@@ -61,7 +59,6 @@ const THEMES = {
       modalMuted: 'text-slate-500',
       modalClose: 'bg-white/[0.06] text-slate-400 hover:text-white',
       modalImgBorder: 'border-white/[0.08]',
-      toggleWrap: 'border-white/[0.08] bg-white/[0.03]',
       toggleActive: 'bg-[#e2c98f] text-[#191204]',
       toggleIdle: 'text-slate-400 hover:text-white',
       previewBorder: 'border-white/[0.1]',
@@ -106,8 +103,7 @@ const THEMES = {
     label: 'น้ำเงินขาว',
     page: {
       section: 'bg-white border-slate-200',
-      sectionAlt: 'bg-white border-slate-200',
-      glowBlob: 'bg-blue-500/[0.06]',
+      sheet: 'bg-white/95 backdrop-blur-xl border-slate-200',
       eyebrow: 'text-blue-600',
       heading: 'text-slate-900',
       sub: 'text-slate-500',
@@ -130,7 +126,6 @@ const THEMES = {
       modalMuted: 'text-slate-500',
       modalClose: 'bg-slate-100 text-slate-400 hover:text-slate-700',
       modalImgBorder: 'border-slate-200',
-      toggleWrap: 'border-slate-200 bg-slate-50',
       toggleActive: 'bg-blue-600 text-white',
       toggleIdle: 'text-slate-500 hover:text-slate-800',
       previewBorder: 'border-slate-200',
@@ -241,14 +236,44 @@ export default function RouteStoryMap({ flights = [] }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [isDrawingCard, setIsDrawingCard] = useState(false);
   const [storyPreviewModal, setStoryPreviewModal] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [themeKey, setThemeKey] = useState('obsidian');
   const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const mapBoundsRef = useRef(null);
   const storyCanvasRef = useRef(null);
   const theme = THEMES[themeKey];
 
   useEffect(() => {
     setStats(calculateMonthlyRosterRouteStats(flights));
   }, [flights]);
+
+  // Fullscreen: lock body scroll + close on Escape
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKey = (e) => e.key === 'Escape' && setIsFullscreen(false);
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [isFullscreen]);
+
+  // Re-fit routes whenever the map container size flips between modes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (mapInstanceRef.current && mapBoundsRef.current) {
+        mapInstanceRef.current.invalidateSize();
+        mapInstanceRef.current.fitBounds(L.latLngBounds(mapBoundsRef.current).pad(0.22), {
+          maxZoom: 6,
+          animate: false,
+          paddingBottomRight: isFullscreen ? [0, Math.round(window.innerHeight * 0.62) + 40] : [0, 0]
+        });
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [isFullscreen]);
 
   const arcs = useMemo(() => {
     if (!stats) return [];
@@ -320,7 +345,7 @@ export default function RouteStoryMap({ flights = [] }) {
       }).addTo(map);
     }
 
-    // Luminous great-circle edges (glow underlay + bright core)
+    // Hairline great-circle edges (faint glow + 0.5px core — nodes are the hero)
     const circles = [];
     arcs.forEach(({ from, to, count }) => {
       const circle = generateGreatCirclePoints(from, to, 96);
@@ -328,27 +353,27 @@ export default function RouteStoryMap({ flights = [] }) {
       const pts = circle.map((p) => [p.lat, p.lng]);
       L.polyline(pts, {
         color: m.arcGlow,
-        weight: 12,
+        weight: 3,
         opacity: m.arcGlowOpacity,
         lineCap: 'round',
         interactive: false
       }).addTo(map);
       L.polyline(pts, {
         color: m.arcCore,
-        weight: 3 + Math.min(count - 1, 3),
+        weight: 0.5 + Math.min(count - 1, 3) * 0.25,
         opacity: 1,
         lineCap: 'round',
         interactive: false
       }).addTo(map);
     });
 
-    // Glowing nodes sized by visit frequency (home base breathes)
+    // Glowing nodes sized by visit frequency (home base breathes); tap for details
     const bounds = [];
     const meanLng = meanLongitude(stats.uniqueAirports);
     stats.uniqueAirports.forEach((ap) => {
       const isHome = ap.code === HOME_BASE;
       const visits = visitCounts[ap.code] || 1;
-      const size = isHome ? 14 : visits >= 4 ? 11 : visits >= 2 ? 9 : 8;
+      const size = isHome ? 16 : visits >= 4 ? 12 : visits >= 2 ? 10 : 9;
       const glow = isHome ? m.nodeGlow : m.nodeOtherGlow;
       const flipLeft = ap.lng > meanLng + 8;
       L.marker([ap.lat, ap.lng], {
@@ -361,15 +386,16 @@ export default function RouteStoryMap({ flights = [] }) {
         })
       })
         .addTo(map)
-        .bindTooltip(`${ap.code} · ${ap.thai || ap.name}`, {
-          direction: 'top',
-          offset: [0, -8],
-          className: 'rm-tip'
-        });
+        .bindPopup(
+          `<div class="rm-pop"><span class="rm-pop-code">${ap.code}</span> ${ap.thai || ap.name}<span class="rm-pop-count">ไป ${visits} ครั้ง</span></div>`,
+          { className: 'rm-pop-pane', closeButton: false, offset: [0, -size - 8] }
+        );
       bounds.push([ap.lat, ap.lng]);
     });
 
     map.fitBounds(L.latLngBounds(bounds).pad(0.22), { maxZoom: 6, animate: false });
+    mapInstanceRef.current = map;
+    mapBoundsRef.current = bounds;
 
     // Traveling light particles along the routes (subtle life)
     const particles = circles.slice(0, 10).map((pts, i) => {
@@ -512,26 +538,27 @@ export default function RouteStoryMap({ flights = [] }) {
         ctx.stroke();
       });
 
-      // 4. Luminous great-circle edges
-      const arcPaths = arcs.map(({ from, to }) =>
-        generateGreatCirclePoints(from, to, 96).map((p) => project(p.lat, p.lng))
-      );
-      arcPaths.forEach((path) => {
+      // 4. Hairline great-circle edges (nodes are the hero)
+      const arcPaths = arcs.map(({ from, to, count }) => ({
+        path: generateGreatCirclePoints(from, to, 96).map((p) => project(p.lat, p.lng)),
+        count
+      }));
+      arcPaths.forEach(({ path, count }) => {
         ctx.beginPath();
         path.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
         ctx.strokeStyle = m.arcGlow;
-        ctx.globalAlpha = 0.35;
-        ctx.lineWidth = 18;
+        ctx.globalAlpha = 0.3;
+        ctx.lineWidth = 6;
         ctx.lineCap = 'round';
         ctx.shadowColor = m.arcGlow;
-        ctx.shadowBlur = 26;
+        ctx.shadowBlur = 14;
         ctx.stroke();
         ctx.globalAlpha = 1;
         ctx.beginPath();
         path.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
         ctx.strokeStyle = m.arcCore;
-        ctx.lineWidth = 6;
-        ctx.shadowBlur = 12;
+        ctx.lineWidth = 2 + Math.min(count - 1, 3) * 0.5;
+        ctx.shadowBlur = 6;
         ctx.stroke();
         ctx.shadowBlur = 0;
       });
@@ -543,7 +570,7 @@ export default function RouteStoryMap({ flights = [] }) {
         const p = project(ap.lat, ap.lng);
         const home = ap.code === HOME_BASE;
         const visits = visitCounts[ap.code] || 1;
-        const r = home ? 11 : visits >= 4 ? 8.5 : visits >= 2 ? 7 : 6;
+        const r = home ? 12 : visits >= 4 ? 9.5 : visits >= 2 ? 8 : 7;
         const glow = home ? m.nodeGlow : m.nodeOtherGlow;
 
         ctx.beginPath();
@@ -689,214 +716,222 @@ export default function RouteStoryMap({ flights = [] }) {
     : [];
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto w-full">
+    <div className="relative max-w-5xl mx-auto w-full">
 
-      {/* HERO: live story card + theme toggle */}
-      <section className={`relative overflow-hidden rounded-[28px] border p-5 sm:p-6 ${t.section}`}>
-        <div className={`pointer-events-none absolute -top-28 -right-16 h-64 w-64 rounded-full blur-3xl ${t.glowBlob}`} />
-        <div className="relative flex flex-col sm:flex-row-reverse items-center sm:items-start gap-5">
-          {/* Live 9:16 card preview (phone-mockup) */}
-          <div className="shrink-0 w-[190px] sm:w-[210px]">
-            <button
-              type="button"
-              onClick={() => setStoryPreviewModal(true)}
-              className={`relative block w-full overflow-hidden rounded-[22px] border ${t.previewBorder} ${t.previewGlow} transition active:scale-[0.98]`}
-              aria-label="ขยายดูการ์ดสตอรี่"
-            >
-              <canvas ref={storyCanvasRef} width={1080} height={1920} className="block w-full h-auto" />
-              {isDrawingCard && (
-                <span className={`absolute inset-0 flex items-center justify-center gap-2 text-xs font-bold ${themeKey === 'obsidian' ? 'bg-black/45 text-[#e2c98f]' : 'bg-white/45 text-blue-700'} backdrop-blur-[2px]`}>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  กำลังวาดแผนที่...
-                </span>
-              )}
-              <span className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[9px] font-bold tracking-wider text-white/90 backdrop-blur-sm">
-                <Maximize2 className="w-3 h-3" />
-                แตะขยาย
-              </span>
-            </button>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={downloadStoryImageFile}
-                disabled={isDrawingCard || !stats}
-                className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-[11px] font-bold transition active:scale-95 disabled:opacity-60 ${t.cta}`}
-              >
-                <Download className="w-3.5 h-3.5" />
-                เซฟ HD
-              </button>
-              <button
-                type="button"
-                onClick={() => setStoryPreviewModal(true)}
-                className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-[11px] font-bold transition active:scale-95 ${t.ghostBtn}`}
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-                ดูเต็มจอ
-              </button>
-            </div>
-          </div>
-
-          {/* Title + theme toggle */}
-          <div className="flex-1 text-center sm:text-left min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-              <div className="flex-1">
-                <div className={`flex items-center justify-center sm:justify-start gap-2.5 ${t.eyebrow}`}>
-                  <Compass className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold tracking-[0.28em] uppercase">
-                    Flight Route Story · Live Radar
-                  </span>
-                </div>
-                <h2 className={`mt-2.5 text-xl sm:text-2xl font-extrabold tracking-tight ${t.heading}`}>
-                  การ์ดสตอรี่เส้นทางบิน
-                </h2>
-                <p className={`mt-1.5 text-xs sm:text-[13px] leading-relaxed ${t.sub}`}>
-                  แผนที่โลกเรืองแสงแบบ Obsidian Graph — โหนดคือสนามบิน เส้นทองคือเส้นทางบิน
-                  แสงทองกลางกราฟคือประเทศที่เคยไป พร้อมเรดาร์ Flightradar24 สด
-                </p>
-              </div>
-            </div>
-
-            {/* Theme switcher */}
-            <div className={`mt-4 inline-flex items-center gap-1 rounded-full border p-1 ${t.toggleWrap}`}>
-              <button
-                type="button"
-                onClick={() => setThemeKey('obsidian')}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold transition ${themeKey === 'obsidian' ? t.toggleActive : t.toggleIdle}`}
-              >
-                <Moon className="w-3.5 h-3.5" />
-                ดำทอง
-              </button>
-              <button
-                type="button"
-                onClick={() => setThemeKey('sky')}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold transition ${themeKey === 'sky' ? t.toggleActive : t.toggleIdle}`}
-              >
-                <Sun className="w-3.5 h-3.5" />
-                น้ำเงินขาว
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Dark world luminous graph */}
-      <section className={`relative rounded-[28px] border overflow-hidden ${t.section}`}>
+      {/* Map — compact embedded card OR fullscreen experience (same live Leaflet instance) */}
+      <section
+        className={
+          isFullscreen
+            ? `fixed inset-0 z-[60] overflow-hidden ${t.section} animate-fade-in`
+            : `relative rounded-[28px] border overflow-hidden ${t.section}`
+        }
+      >
+        {/* Top-left live chip */}
         <div className={`absolute top-3.5 left-3.5 z-[1001] flex items-center gap-2 rounded-full border px-3 py-1.5 backdrop-blur-md ${t.chip}`}>
           <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${t.liveDot}`} />
           <span className="text-[9px] font-bold tracking-[0.22em] uppercase">
             Obsidian Flight Graph
           </span>
+          <span className={`text-[10px] font-mono ${t.chipMuted}`}>
+            · {stats?.uniqueAirports.length || 0} สนามบิน
+          </span>
         </div>
-        <div className={`absolute top-3.5 right-11 z-[1001] rounded-full border px-2.5 py-1.5 font-mono text-[10px] backdrop-blur-md ${t.chip} ${t.chipMuted}`}>
-          {stats?.uniqueAirports.length || 0} สนามบิน
+
+        {/* Top-right: fullscreen toggle / close + theme */}
+        <div className="absolute top-3.5 right-3.5 z-[1001] flex items-center gap-2">
+          {isFullscreen ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setThemeKey(themeKey === 'obsidian' ? 'sky' : 'obsidian')}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md transition active:scale-95 ${t.chip} ${t.toggleIdle}`}
+                aria-label={`สลับธีมเป็น${themeKey === 'obsidian' ? 'น้ำเงินขาว' : 'ดำทอง'}`}
+              >
+                {themeKey === 'obsidian' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(false)}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md transition active:scale-95 ${t.chip}`}
+                aria-label="ปิดโหมดเต็มจอ"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 backdrop-blur-md text-[11px] font-bold transition active:scale-95 ${t.chip}`}
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              เต็มจอ
+            </button>
+          )}
         </div>
 
         <div
           ref={mapRef}
-          className={`h-[380px] sm:h-[440px] lg:h-[500px] w-full rm-leaflet rm-${themeKey}`}
+          className={`w-full rm-leaflet rm-${themeKey} ${isFullscreen ? 'rm-fill' : 'h-[380px] sm:h-[440px] lg:h-[500px]'}`}
         />
 
-        {stats && (
-          <div className={`grid grid-cols-2 sm:grid-cols-4 border-t ${t.stripBg} ${t.stripCell}`}>
-            {stripStats.map(([label, value, unit], i) => (
-              <div
-                key={label}
-                className={`px-4 py-3.5 ${t.stripCell} ${
-                  ['', 'border-l', 'border-t sm:border-t-0 sm:border-l', 'border-l border-t sm:border-t-0'][i]
-                }`}
+        {/* Fullscreen bottom sheet: card + stats + FR24 (always mounted so the live canvas keeps drawing) */}
+        <div
+          className={
+            isFullscreen
+              ? `absolute inset-x-0 bottom-0 z-[1002] max-h-[62vh] overflow-y-auto rounded-t-[28px] border-t shadow-[0_-16px_48px_rgba(0,0,0,0.45)] ${t.sheet}`
+              : 'hidden'
+          }
+        >
+          <div className="px-4 pt-3 pb-5">
+            <div className={`mx-auto mb-3 h-1 w-10 rounded-full bg-current opacity-10`} />
+
+            {/* Live story card + actions */}
+            <div className="flex items-start gap-4">
+              <button
+                type="button"
+                onClick={() => setStoryPreviewModal(true)}
+                className={`relative block w-[118px] shrink-0 overflow-hidden rounded-2xl border ${t.previewBorder} ${t.previewGlow} transition active:scale-[0.98]`}
+                aria-label="ขยายดูการ์ดสตอรี่"
               >
-                <span className={`block text-[9px] font-bold tracking-[0.2em] uppercase ${t.stripLabel}`}>
-                  {label}
-                </span>
-                <span className={`mt-1 block text-base sm:text-lg font-bold font-mono tabular-nums ${t.stripValue}`}>
-                  {value}
-                  <span className={`ml-1 text-[11px] font-semibold ${t.unit}`}>{unit}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+                <canvas ref={storyCanvasRef} width={1080} height={1920} className="block w-full h-auto" />
+                {isDrawingCard && (
+                  <span className={`absolute inset-0 flex items-center justify-center ${themeKey === 'obsidian' ? 'bg-black/45 text-[#e2c98f]' : 'bg-white/45 text-blue-700'} backdrop-blur-[2px]`}>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </span>
+                )}
+              </button>
 
-      {/* Flightradar24 live tracking list */}
-      <section className={`rounded-[28px] border p-5 sm:p-6 ${t.section}`}>
-        <div className="flex items-center justify-between gap-3 pb-2">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex w-2 h-2">
-              <span className={`absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping ${t.liveDot}`} />
-              <span className={`relative inline-flex w-2 h-2 rounded-full ${t.liveDot}`} />
-            </span>
-            <h3 className={`text-sm sm:text-base font-bold tracking-tight ${t.heading}`}>
-              ติดตามไฟลท์สด · Flightradar24
-            </h3>
-          </div>
-          <span className={`hidden sm:block text-[11px] ${t.sub}`}>
-            แตะเพื่อเปิดเรดาร์สด / แชร์ให้ครอบครัว
-          </span>
-        </div>
-
-        <div className={`divide-y ${t.divide}`}>
-          {flightDuties.map((f, idx) => {
-            const fr24Url = generateFlightradarUrl(f.pairing);
-            const isCopied = copiedIndex === idx;
-
-            return (
-              <div key={idx} className="py-3.5 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className={`flex items-center gap-2 font-mono text-[11px] ${t.dateMono}`}>
-                    <span>{f.date}</span>
-                    <span className="h-3 w-px bg-current opacity-15" />
-                    <span>RPT {f.reportTime || '--:--'} L</span>
+              <div className="flex-1 min-w-0 space-y-2.5">
+                <div>
+                  <div className={`flex items-center gap-2 text-[9px] font-bold tracking-[0.24em] uppercase ${t.eyebrow}`}>
+                    <Sparkles className="w-3 h-3" />
+                    CREW STORY CARD · 9:16
                   </div>
-                  <p className={`mt-0.5 text-[15px] font-bold tracking-tight truncate ${t.pairing}`}>
-                    {f.pairing}
+                  <p className={`mt-1 text-sm font-bold leading-snug ${t.heading}`}>
+                    การ์ดสตอรี่เส้นทางบิน พร้อมโพสต์ลง IG / TikTok
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href={fr24Url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-[11px] font-bold transition active:scale-95 ${t.frBtn}`}
-                  >
-                    <Radio className="w-3.5 h-3.5" />
-                    <span>เรดาร์สด</span>
-                    <ExternalLink className="w-3 h-3 opacity-60" />
-                  </a>
-
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => handleShareFlightradar(f, idx)}
+                    onClick={downloadStoryImageFile}
+                    disabled={isDrawingCard || !stats}
+                    className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[11px] font-bold transition active:scale-95 disabled:opacity-60 ${t.cta}`}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    เซฟ HD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStoryPreviewModal(true)}
                     className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-[11px] font-bold transition active:scale-95 ${t.ghostBtn}`}
                   >
-                    {isCopied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>คัดลอกแล้ว</span>
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="w-3.5 h-3.5" />
-                        <span>แชร์</span>
-                      </>
-                    )}
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    ดูเต็มจอ
                   </button>
                 </div>
+
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold">
+                  {themeKey === 'obsidian' ? (
+                    <Moon className={`w-3 h-3 ${t.unit}`} />
+                  ) : (
+                    <Sun className={`w-3 h-3 ${t.unit}`} />
+                  )}
+                  <span className={t.chipMuted}>ธีม{theme.label} · สลับได้จากปุ่มขวาบน</span>
+                </div>
               </div>
-            );
-          })}
-          {flightDuties.length === 0 && (
-            <p className={`py-6 text-center text-xs ${t.empty}`}>
-              ยังไม่มีไฟลท์ในเดือนนี้ — สแกน Roster ก่อนนะครับ
-            </p>
-          )}
+            </div>
+
+            {/* Stats */}
+            {stats && (
+              <div className={`mt-4 grid grid-cols-4 overflow-hidden rounded-2xl border ${t.stripCell} ${t.stripBg}`}>
+                {stripStats.map(([label, value, unit], i) => (
+                  <div key={label} className={`px-3 py-2.5 ${i > 0 ? `border-l ${t.stripCell}` : ''}`}>
+                    <span className={`block text-[8px] font-bold tracking-[0.18em] uppercase ${t.stripLabel}`}>
+                      {label}
+                    </span>
+                    <span className={`mt-0.5 block text-sm font-bold font-mono tabular-nums ${t.stripValue}`}>
+                      {value}
+                      <span className={`ml-0.5 text-[9px] font-semibold ${t.unit}`}>{unit}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Flightradar24 list */}
+            <div className="mt-3">
+              <div className="flex items-center gap-2.5 pb-1.5">
+                <span className="relative flex w-2 h-2">
+                  <span className={`absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping ${t.liveDot}`} />
+                  <span className={`relative inline-flex w-2 h-2 rounded-full ${t.liveDot}`} />
+                </span>
+                <h3 className={`text-xs font-bold tracking-tight ${t.heading}`}>
+                  ติดตามไฟลท์สด · Flightradar24
+                </h3>
+              </div>
+
+              <div className={`divide-y ${t.divide}`}>
+                {flightDuties.map((f, idx) => {
+                  const fr24Url = generateFlightradarUrl(f.pairing);
+                  const isCopied = copiedIndex === idx;
+
+                  return (
+                    <div key={idx} className="py-2.5 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className={`flex items-center gap-2 font-mono text-[10px] ${t.dateMono}`}>
+                          <span>{f.date}</span>
+                          <span className="h-3 w-px bg-current opacity-15" />
+                          <span>RPT {f.reportTime || '--:--'} L</span>
+                        </div>
+                        <p className={`mt-0.5 text-[13px] font-bold tracking-tight truncate ${t.pairing}`}>
+                          {f.pairing}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <a
+                          href={fr24Url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition active:scale-95 ${t.frBtn}`}
+                        >
+                          <Radio className="w-3 h-3" />
+                          เรดาร์สด
+                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => handleShareFlightradar(f, idx)}
+                          className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition active:scale-95 ${t.ghostBtn}`}
+                        >
+                          {isCopied ? (
+                            <Check className="w-3 h-3 text-emerald-500" />
+                          ) : (
+                            <Share2 className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {flightDuties.length === 0 && (
+                  <p className={`py-4 text-center text-[11px] ${t.empty}`}>
+                    ยังไม่มีไฟลท์ในเดือนนี้ — สแกน Roster ก่อนนะครับ
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Story preview modal */}
+      {/* Story preview modal (above fullscreen layer) */}
       {storyPreviewModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
           <div className={`rounded-3xl max-w-sm w-full border overflow-hidden shadow-2xl p-4 space-y-4 ${t.modalBg} ${t.modalText}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
