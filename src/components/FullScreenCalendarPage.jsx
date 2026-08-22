@@ -280,7 +280,7 @@ export default function FullScreenCalendarPage() {
               {isActionsOpen && (
                 <div className="absolute right-0 top-11 z-50 w-52 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl">
                   <button type="button" onClick={() => { setViewMode('agenda'); setIsActionsOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"><List className="h-4 w-4 text-slate-500" /> ไทม์ไลน์</button>
-                  <button type="button" onClick={() => { setViewMode('story'); setIsActionsOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"><Layers className="h-4 w-4 text-slate-500" /> สตอรี่ & เรดาร์</button>
+                  <button type="button" onClick={() => { setViewMode('story'); setIsActionsOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"><Layers className="h-4 w-4 text-slate-500" /> เส้นทางบิน & เรดาร์</button>
                   <div className="my-1 border-t border-slate-100" />
                   <button type="button" onClick={() => { downloadIcsFile(flights, dressUpMinutes, transitMinutes); setIsActionsOpen(false); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"><Download className="h-4 w-4 text-slate-500" /> ส่งออก Calendar (.ics)</button>
                 </div>

@@ -193,7 +193,7 @@ export default function LiffSchedulePicker() {
               }`}
             >ปฏิทิน</button>
           </div>
-          <button type="button" onClick={() => setActiveTab('story')} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition hover:bg-slate-50" title="สตอรี่และเรดาร์" aria-label="สตอรี่และเรดาร์">
+          <button type="button" onClick={() => setActiveTab('story')} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition hover:bg-slate-50" title="เส้นทางบินและเรดาร์" aria-label="เส้นทางบินและเรดาร์">
             <Map className="h-4 w-4" />
           </button>
         </div>
