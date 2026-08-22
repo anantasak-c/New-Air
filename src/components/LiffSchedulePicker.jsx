@@ -1,34 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import liff from '@line/liff';
-import { 
-  Clock, 
-  Plane, 
-  Car, 
-  Sparkles, 
-  Check, 
-  Plus, 
-  Minus, 
-  Send, 
-  Calendar, 
-  Coffee, 
+import {
+  Car,
+  Check,
+  Plus,
+  Minus,
+  Send,
+  Calendar,
+  Coffee,
   Sun,
-  ShieldCheck,
   CheckCircle2,
-  ChevronRight,
-  Map
+  ChevronRight
 } from 'lucide-react';
 import { buildRosterFlexCarousel } from '../utils/flexBuilder';
 import { decompressFlights } from '../utils/flightCodec';
-import SmartAviationCalendar from './SmartAviationCalendar';
-import RouteStoryMap from './RouteStoryMap';
 
 export default function LiffSchedulePicker() {
   const [liffInitialized, setLiffInitialized] = useState(false);
   const [liffError, setLiffError] = useState(null);
   const [isInLine, setIsInLine] = useState(false);
-
-  // Active Tab: 'settings', 'calendar', or 'story'
-  const [activeTab, setActiveTab] = useState('settings');
 
   // Scanned flights parsed from URL
   const [flights, setFlights] = useState([]);
@@ -141,6 +131,12 @@ export default function LiffSchedulePicker() {
   const totalMinutes = dressUpMinutes + transitMinutes;
   const totalHoursFormatted = (totalMinutes / 60).toFixed(1);
 
+  // Entry to the 100% LIFF (calendar + route map); falls back to /calendar URL
+  const fullLiffId = import.meta.env.VITE_LIFF_FULL_ID || window.__LIFF_FULL_ID__ || '';
+  const calendarHref = fullLiffId
+    ? `https://liff.line.me/${fullLiffId}${window.location.search}`
+    : `/calendar${window.location.search}`;
+
   const handleSendToLine = async () => {
     const selectedFlights = flights.filter((_, idx) => selectedIndices.has(idx));
     if (selectedFlights.length === 0) {
@@ -175,60 +171,13 @@ export default function LiffSchedulePicker() {
       {/* Mobile-first white utility header */}
       <div className="pt-2 pb-2 px-4 sticky top-0 z-30 bg-[#F2F2F7]/95 backdrop-blur-md space-y-2">
         <div className="w-10 h-1.2 rounded-full bg-slate-300 mx-auto" />
-        
-        <div className="mx-auto flex max-w-md items-center gap-2">
-          <div className="grid flex-1 grid-cols-2 gap-1 rounded-xl border border-slate-300/60 bg-slate-200/80 p-0.5 shadow-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('settings')}
-              className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 ${
-                activeTab === 'settings' ? 'bg-white text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >ปรับเวลา</button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('calendar')}
-              className={`py-1.5 px-1.5 text-center rounded-lg text-xs font-bold transition-all duration-150 ${
-                activeTab === 'calendar' ? 'bg-white text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >ปฏิทิน</button>
-          </div>
-          <button type="button" onClick={() => setActiveTab('story')} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition hover:bg-slate-50" title="เส้นทางบินและเรดาร์" aria-label="เส้นทางบินและเรดาร์">
-            <Map className="h-4 w-4" />
-          </button>
-        </div>
+        <p className="mx-auto max-w-md text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+          ปรับเวลานอนล่วงหน้า
+        </p>
       </div>
 
       <main className="max-w-md mx-auto w-full px-3.5 space-y-2.5 pb-24 flex-1">
-        {activeTab === 'story' ? (
-          <RouteStoryMap flights={flights} />
-        ) : activeTab === 'calendar' ? (
-          <div className="space-y-2.5">
-            {/* Full Screen Link Button */}
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[11px] font-semibold text-slate-500">
-                ต้องการดูแบบแนวนอน / ช่องกว้าง?
-              </span>
-              <a
-                href={`/calendar${window.location.search}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 transition active:scale-95 shadow-2xs"
-              >
-                <span>เปิดเต็มจอ</span>
-              </a>
-            </div>
-
-            <SmartAviationCalendar 
-              flights={flights} 
-              dressUpMinutes={dressUpMinutes} 
-              transitMinutes={transitMinutes} 
-              onSendToLine={handleSendToLine}
-            />
-          </div>
-        ) : (
-          <>
-            {/* Apple Health-Style Clean White Hero Widget */}
+        {/* Apple Health-Style Clean White Hero Widget */}
             <div className="rounded-2xl bg-white border border-slate-200/80 p-3.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -477,8 +426,17 @@ export default function LiffSchedulePicker() {
             </div>
           </div>
         )}
-          </>
-        )}
+        {/* Compact entry to the full-screen calendar (LIFF 100%) */}
+        <div className="pt-1 pb-2 text-center">
+          <a
+            href={calendarHref}
+            className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-600 border border-blue-200 transition active:scale-95"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            เปิดปฏิทินวางแผนชีวิต (เต็มจอ)
+            <ChevronRight className="w-3 h-3" />
+          </a>
+        </div>
 
       </main>
 

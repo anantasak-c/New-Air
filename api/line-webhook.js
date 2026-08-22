@@ -174,11 +174,16 @@ export default async function handler(req, res) {
         const encodedData = Buffer.from(unescape(encodeURIComponent(compactJson))).toString('base64');
 
         // Construct LIFF URL (Drawer) and Calendar URL (Full Screen)
-        const liffUrl = LIFF_ID 
+        const liffUrl = LIFF_ID
           ? `https://liff.line.me/${LIFF_ID}?d=${encodedData}`
           : `https://new-air-phi.vercel.app/liff?d=${encodedData}`;
 
-        const calendarUrl = `https://new-air-phi.vercel.app/calendar?d=${encodedData}`;
+        // Prefer opening the calendar inside LINE via the 100% LIFF when its
+        // ID is configured; otherwise fall back to the plain web URL.
+        const LIFF_ID_FULL = process.env.LINE_LIFF_ID_FULL || '';
+        const calendarUrl = LIFF_ID_FULL
+          ? `https://liff.line.me/${LIFF_ID_FULL}?d=${encodedData}`
+          : `https://new-air-phi.vercel.app/calendar?d=${encodedData}`;
 
         console.log('LIFF URL Length:', liffUrl.length);
         const invitationCard = buildLiffInvitationCard(flights, liffUrl, calendarUrl);
