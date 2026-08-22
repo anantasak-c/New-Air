@@ -75,7 +75,7 @@ const THEMES = {
       countryStroke: 'rgba(217, 185, 140, 0.45)',
       arcCore: '#eed9ac',
       arcGlow: '#d9b98c',
-      arcGlowOpacity: 0.12,
+      arcGlowOpacity: 0.22,
       nodeHome: '#e7cf9e',
       nodeOther: '#f2f4f8',
       nodeGlow: '231, 207, 158',
@@ -144,7 +144,7 @@ const THEMES = {
       countryStroke: 'rgba(37, 99, 235, 0.4)',
       arcCore: '#2563eb',
       arcGlow: '#3b82f6',
-      arcGlowOpacity: 0.15,
+      arcGlowOpacity: 0.28,
       nodeHome: '#2563eb',
       nodeOther: '#1e293b',
       nodeGlow: '37, 99, 235',
@@ -328,15 +328,15 @@ export default function RouteStoryMap({ flights = [] }) {
       const pts = circle.map((p) => [p.lat, p.lng]);
       L.polyline(pts, {
         color: m.arcGlow,
-        weight: 7,
+        weight: 12,
         opacity: m.arcGlowOpacity,
         lineCap: 'round',
         interactive: false
       }).addTo(map);
       L.polyline(pts, {
         color: m.arcCore,
-        weight: 1.6 + Math.min(count - 1, 3) * 0.7,
-        opacity: 0.9,
+        weight: 3 + Math.min(count - 1, 3),
+        opacity: 1,
         lineCap: 'round',
         interactive: false
       }).addTo(map);
@@ -520,18 +520,18 @@ export default function RouteStoryMap({ flights = [] }) {
         ctx.beginPath();
         path.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
         ctx.strokeStyle = m.arcGlow;
-        ctx.globalAlpha = 0.3;
-        ctx.lineWidth = 12;
+        ctx.globalAlpha = 0.35;
+        ctx.lineWidth = 18;
         ctx.lineCap = 'round';
         ctx.shadowColor = m.arcGlow;
-        ctx.shadowBlur = 24;
+        ctx.shadowBlur = 26;
         ctx.stroke();
         ctx.globalAlpha = 1;
         ctx.beginPath();
         path.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
         ctx.strokeStyle = m.arcCore;
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 10;
+        ctx.lineWidth = 6;
+        ctx.shadowBlur = 12;
         ctx.stroke();
         ctx.shadowBlur = 0;
       });
